@@ -1,0 +1,29 @@
+server:
+  port: 29000
+
+spring:
+  profiles:
+    active: local
+  cloud:
+    gateway:
+      routes:
+        - id: to-api-adaptor
+          uri: http://localhost:8090   # 대상 서비스 URI
+          predicates:
+            - Path=/esb/api/gateway/recv-ad1   # 요청 경로 조건
+          filters:
+            - RewritePath=/esb/api/gateway/(?<remaining>.*), /esb/api/${remaining}
+        - id: to-rfc-adaptor
+          uri: http://localhost:8081   # 대상 서비스 URI
+          predicates:
+            - Path=/esb/api/gateway/recv-ad2   # 요청 경로 조건
+          filters:
+            - RewritePath=/esb/api/gateway/(?<remaining>.*), /esb/api/${remaining}
+  main:
+    web-application-type: reactive
+    allow-bean-definition-overriding: true
+    autoconfigure:
+      exclude:
+        - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+  mustache:
+    check-template-location: false
