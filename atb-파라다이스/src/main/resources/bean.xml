@@ -19,7 +19,7 @@
             <list/>
         </property>
     </bean>
-    <bean class="org.springframework.jms.core.JmsTemplate" id="jmsTemplate">
+   <!-- <bean class="org.springframework.jms.core.JmsTemplate" id="jmsTemplate">
         <description/>
         <property name="connectionFactory" ref="jmsConnectionFactory"/>
         <property name="deliveryMode" value="1"/>
@@ -28,6 +28,6 @@
         <property name="pubSubDomain" value="false"/>
         <property name="explicitQosEnabled" value="true"/>
         <property name="sessionTransacted" value="false"/>
-    </bean>
-    <import resource="classpath:commons_configure.xml"/>
+    </bean>-->
+    <!--<import resource="classpath:commons_configure.xml"/>-->
 </beans>

@@ -1,6 +1,7 @@
 package mb.fw.paradise.mock;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.HttpRequest;
@@ -26,6 +27,7 @@ public class MockServer {
 						"A00000000000000000000000000000000000000000000000030dososo   12345        0101234567802245865845   "));
 	}
 
+	@PreDestroy
 	public void stopServer() {
 		mockServer.stop();
 	}

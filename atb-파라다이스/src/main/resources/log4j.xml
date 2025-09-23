@@ -25,6 +25,9 @@
         <category name="org.mockserver">
         <priority value="WARN"/>
     </category>
+        <category name="com.mb.indigo2.imagent.HeartbeatAgent">
+        <priority value="ERROR"/>
+    </category>
 
     <root>
         <level value="DEBUG"/>

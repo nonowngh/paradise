@@ -4,6 +4,10 @@ server:
 spring:
   profiles:
     active: local
+  cache:
+    cache-names: interfaceInfoCache
+    caffeine:
+      spec: maximumSize=300,expireAfterWrite=30m
   cloud:
     gateway:
       routes:
@@ -12,18 +16,18 @@ spring:
           predicates:
             - Path=/esb/api/gateway/recv-ad1   # 요청 경로 조건
           filters:
-            - RewritePath=/esb/api/gateway/(?<remaining>.*), /esb/api/${remaining}
+            - name : CommonRewritePath
         - id: to-rfc-adaptor
           uri: http://localhost:8081   # 대상 서비스 URI
           predicates:
             - Path=/esb/api/gateway/recv-ad2   # 요청 경로 조건
           filters:
-            - RewritePath=/esb/api/gateway/(?<remaining>.*), /esb/api/${remaining}
+            - name : CommonRewritePath
   main:
     web-application-type: reactive
     allow-bean-definition-overriding: true
-    autoconfigure:
-      exclude:
-        - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
   mustache:
     check-template-location: false
