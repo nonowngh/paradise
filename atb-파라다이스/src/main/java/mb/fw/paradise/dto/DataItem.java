@@ -4,9 +4,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import lombok.Builder;
 import lombok.Data;
 
 @Data
+@Builder
 public class DataItem {
 
 	private Table table;
@@ -15,16 +17,19 @@ public class DataItem {
 
 	private Parameter parameter;
 
-	class Table {
+	@Data
+	@Builder
+	public static class Table {
 		LinkedHashMap<String, List<Map<String, Object>>> tableItem;
 	}
 
-	class Structure {
+	@Data
+	public static  class Structure {
 		LinkedHashMap<String, Map<String, Object>> structureItem;
-
 	}
 
-	class Parameter {
+	@Data
+	public static class Parameter {
 		LinkedHashMap<String, Object> parameterItem;
 	}
 }
