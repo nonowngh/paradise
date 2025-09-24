@@ -14,20 +14,21 @@ import mb.fw.atb.util.ATBUtil;
 @Service
 public class LoggingService {
 
-    @Async
-    public void asyncStartLogging(JmsTemplate jmsTemplate, String ifId, String txId, String sndCd, String rcvCd) {
-        String nowDateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
-        log.info("jms start logging[{}]", txId);
-        try {
-            ATBUtil.startLogging(jmsTemplate, ifId, txId, null, 1, sndCd, rcvCd, nowDateTime, null);
-        } catch (Exception e) {
-            log.error("JMS start logging error!!!", e);
-        }
-    }
-    
-    @Async
-    public void asyncEndLogging(JmsTemplate jmsTemplate, String ifId, String txId, int errorCount, String statusCd, String errorMsg) {
-        log.info("jms end logging[{}]", txId);
+	@Async
+	public void asyncStartLogging(JmsTemplate jmsTemplate, String ifId, String txId, String sndCd, String rcvCd) {
+		String nowDateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
+		log.info("jms start logging[{}]", txId);
+		try {
+			ATBUtil.startLogging(jmsTemplate, ifId, txId, null, 1, sndCd, rcvCd, nowDateTime, null);
+		} catch (Exception e) {
+			log.error("JMS start logging error!!!", e);
+		}
+	}
+
+	@Async
+	public void asyncEndLogging(JmsTemplate jmsTemplate, String ifId, String txId, int errorCount, String statusCd,
+			String errorMsg) {
+		log.info("jms end logging[{}]", txId);
 		try {
 			ATBUtil.endLogging(jmsTemplate, ifId, txId, "", errorCount, statusCd, errorMsg, null);
 		} catch (Exception e) {

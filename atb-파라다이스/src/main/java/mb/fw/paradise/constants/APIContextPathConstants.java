@@ -9,11 +9,14 @@ public class APIContextPathConstants {
 	public static final String DEFAULT_PATH = "/esb/api";
 
 	// 인터페이스 정보 API path
-	public static final String INTERFACE_INFO_API = DEFAULT_PATH + "/interface_info";
+	public static final String INTERFACE_INFO_API = DEFAULT_PATH + "/interface-info";
 
 	// 인터페이스 정보 API clear cache path
-	public static final String INTERFACE_INFO_API_CLEAR_CACHE = DEFAULT_PATH + "/interface_info/clear-cache";
+	public static final String INTERFACE_INFO_API_CLEAR_CACHE = "/clear-cache";
 
 	// Gateway path
 	public static final String GATEWAY = DEFAULT_PATH + "/gateway";
+	
+	// 인터페이스 스케줄 정보
+	public static final String INTERFACE_INFO_API_SCHEDULE_LIST = "/schedule-list";
 }

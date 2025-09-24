@@ -1,5 +1,7 @@
 package mb.fw.paradise.api.service;
 
+import java.util.List;
+
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
@@ -33,4 +35,8 @@ public class InterfaceInfoService {
 	public void clearAllInfoCache() {
         log.info("interfaceInfoCache 캐시 삭제 완료.");
 	}
+	
+	public Mono<List<InterfaceInfo>> getScheduleList(List<String> interfaceIdList) {
+        return Mono.just(interfaceInfoMapper.selectInterfaceCronExpressionListByInterfaceIdList(interfaceIdList));
+    }
 }

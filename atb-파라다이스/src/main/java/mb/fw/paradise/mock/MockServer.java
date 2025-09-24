@@ -1,5 +1,8 @@
 package mb.fw.paradise.mock;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
@@ -9,7 +12,12 @@ import org.mockserver.model.HttpResponse;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import lombok.RequiredArgsConstructor;
+import mb.fw.paradise.api.model.InterfaceInfo;
+import mb.fw.paradise.constants.APIContextPathConstants;
 
 @Profile("local")
 @Component
@@ -18,13 +26,17 @@ public class MockServer {
 	private ClientAndServer mockServer;
 
 	@PostConstruct
-	public void startServer() {
+	public void startServer() throws JsonProcessingException {
 
 		mockServer = ClientAndServer.startClientAndServer(8090);
-
-		mockServer.when(HttpRequest.request().withMethod("POST").withPath("/esb/api/recv-ad1"))
-				.respond(HttpResponse.response().withStatusCode(200).withBody(
-						"A00000000000000000000000000000000000000000000000030dososo   12345        0101234567802245865845   "));
+		List<InterfaceInfo> infoList = new ArrayList<>();
+		InterfaceInfo info = new InterfaceInfo();
+		info.setInterfaceId("IF_TEST_01");
+		info.setCronExpression("0/10 * * * * ?");
+		infoList.add(info);
+		mockServer.when(HttpRequest.request().withMethod("POST").withPath(APIContextPathConstants.INTERFACE_INFO_API + APIContextPathConstants.INTERFACE_INFO_API_SCHEDULE_LIST))
+				.respond(HttpResponse.response().withStatusCode(200).withHeader("Content-Type", "application/json").withBody(
+						new ObjectMapper().writeValueAsString(infoList)));
 	}
 
 	@PreDestroy
