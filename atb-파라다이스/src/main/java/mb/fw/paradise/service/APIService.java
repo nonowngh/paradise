@@ -1,5 +1,7 @@
 package mb.fw.paradise.service;
 
+import java.util.NoSuchElementException;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -25,7 +27,9 @@ public class APIService {
 
 	public InterfaceInfo getInterfaceInfo(String interfaceId) {
 		return interfaceInfoWebClient.get().uri(uriBuilder -> uriBuilder.queryParam("interfaceId", interfaceId).build())
-				.retrieve().bodyToMono(InterfaceInfo.class).block();
+				.retrieve().bodyToMono(InterfaceInfo.class)
+				.switchIfEmpty(Mono.error(new NoSuchElementException("InterfaceInfo not found for id : " + interfaceId)))
+				.block();
 	}
 
 	public Mono<APIResponseMessage> callGateway(APIReqeustMessage request, TargetModule targetModule) {
