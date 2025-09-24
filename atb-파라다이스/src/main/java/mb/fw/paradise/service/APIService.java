@@ -7,12 +7,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import lombok.extern.slf4j.Slf4j;
 import mb.fw.paradise.api.model.InterfaceInfo;
 import mb.fw.paradise.constants.TargetModule;
 import mb.fw.paradise.dto.APIReqeustMessage;
 import mb.fw.paradise.dto.APIResponseMessage;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 @Service
 public class APIService {
 
@@ -28,7 +30,8 @@ public class APIService {
 	public InterfaceInfo getInterfaceInfo(String interfaceId) {
 		return interfaceInfoWebClient.get().uri(uriBuilder -> uriBuilder.queryParam("interfaceId", interfaceId).build())
 				.retrieve().bodyToMono(InterfaceInfo.class)
-				.switchIfEmpty(Mono.error(new NoSuchElementException("InterfaceInfo not found for id : " + interfaceId)))
+				.switchIfEmpty(
+						Mono.error(new NoSuchElementException("InterfaceInfo not found for id : " + interfaceId)))
 				.block();
 	}
 
@@ -38,5 +41,16 @@ public class APIService {
 						clientResponse -> clientResponse.bodyToMono(String.class)
 								.flatMap(errorBody -> Mono.error(new RuntimeException("Error: " + errorBody))))
 				.bodyToMono(APIResponseMessage.class);
+	}
+
+	public Mono<String> callGatewayForResult(APIResponseMessage response, String callbackPath) {
+		return gatewayWebClient.post().uri(callbackPath).bodyValue(response).retrieve().bodyToMono(String.class)
+				.doOnError(error -> {
+					// 오류 처리 (예: 로그 기록)
+					log.error("결과 전송 중 오류 발생 : " + error.getMessage());
+				}).doOnTerminate(() -> {
+					// 요청이 종료된 후 실행할 작업 (예: 로깅, 트래킹 등)
+					log.info("결과 전송 완료");
+				});
 	}
 }

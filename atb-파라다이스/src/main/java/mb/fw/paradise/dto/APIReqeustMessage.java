@@ -13,5 +13,7 @@ public class APIReqeustMessage {
 	
 	private DataItem dataItem;
 	
+	private String callBackPath;
+	
 }
 

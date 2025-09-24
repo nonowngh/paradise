@@ -13,50 +13,50 @@ import mb.fw.paradise.constants.SQLConstants;
 import mb.fw.paradise.dto.DataItem.Table;
 
 @Service
-public class SndModuleService {
+public class SendDBModuleService {
 
 	private final SqlSessionTemplate sqlSessionTemplate;
 
-	public SndModuleService(SqlSessionTemplate sqlSessionTemplate) {
+	public SendDBModuleService(SqlSessionTemplate sqlSessionTemplate) {
 		this.sqlSessionTemplate = sqlSessionTemplate;
 	}
-	
-	public int update(List<String> tableNameList, List<SqlQuery> sqlQueryList, Map<String, Object> params) {
+
+	public int update(List<String> tableNameList, List<SqlQuery> queryList, Map<String, Object> params) {
 		int updateCount = 0;
 		for (String tableName : tableNameList) {
-			Optional<SqlQuery> result = sqlQueryList.stream()
+			Optional<SqlQuery> result = queryList.stream()
 					.filter(q -> (SQLConstants.SQL_ID_UPDATE + "." + tableName).equals(q.getSqlId())).findFirst();
 			if (result.isPresent()) {
-				String sql = result.get().getQuery();
-				updateCount += sqlSessionTemplate.update(sql, params);
+				updateCount += sqlSessionTemplate.update(result.get().getQuery(), params);
 			}
 		}
 		return updateCount;
 	}
 
-	public Table getTableData(List<String> tableNameList, List<SqlQuery> sqlQueryList, Map<String, Object> params) {
+	public Table getTableData(List<String> tableNameList, List<SqlQuery> queryList, Map<String, Object> params) {
+		// 데이터 조회
 		LinkedHashMap<String, List<Map<String, Object>>> tableItem = new LinkedHashMap<>();
 		for (String tableName : tableNameList) {
-			Optional<SqlQuery> result = sqlQueryList.stream()
+			Optional<SqlQuery> result = queryList.stream()
 					.filter(q -> (SQLConstants.SQL_ID_SELECT + "." + tableName).equals(q.getSqlId())).findFirst();
 			if (result.isPresent()) {
-				String sql = result.get().getQuery();
-				tableItem.put(tableName, sqlSessionTemplate.selectList(sql, params));
+				tableItem.put(tableName, sqlSessionTemplate.selectList(result.get().getQuery(), params));
 			}
 		}
 		return Table.builder().tableItem(tableItem).build();
 	}
-	
+
 	public int updateResult(List<String> tableNameList, List<SqlQuery> sqlQueryList, Map<String, Object> params) {
 		int updateCount = 0;
 		for (String tableName : tableNameList) {
 			Optional<SqlQuery> result = sqlQueryList.stream()
-					.filter(q -> (SQLConstants.SQL_ID_UPDATE_REUSLT + "." + tableName).equals(q.getSqlId())).findFirst();
+					.filter(q -> (SQLConstants.SQL_ID_UPDATE_REUSLT + "." + tableName).equals(q.getSqlId()))
+					.findFirst();
 			if (result.isPresent()) {
-				String sql = result.get().getQuery();
-				updateCount += sqlSessionTemplate.update(sql, params);
+				updateCount += sqlSessionTemplate.update(result.get().getQuery(), params);
 			}
 		}
 		return updateCount;
 	}
+
 }

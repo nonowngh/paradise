@@ -1,4 +1,4 @@
-package mb.fw.paradise.module.send;
+package mb.fw.paradise.module.scheduler;
 
 import java.util.AbstractMap;
 import java.util.Arrays;
@@ -15,11 +15,12 @@ import mb.fw.paradise.api.model.InterfaceInfo;
 import mb.fw.paradise.api.model.SqlQuery;
 import mb.fw.paradise.constants.ESBCommonFieldConstants;
 import mb.fw.paradise.constants.TargetModule;
+import mb.fw.paradise.constants.TargetModuleContextPathConstants;
 import mb.fw.paradise.dto.APIReqeustMessage;
 import mb.fw.paradise.dto.DataItem;
 import mb.fw.paradise.module.BatchModule;
 import mb.fw.paradise.service.APIService;
-import mb.fw.paradise.service.SndModuleService;
+import mb.fw.paradise.service.SendDBModuleService;
 import mb.fw.paradise.util.TransactionGenerator;
 
 @Slf4j
@@ -27,18 +28,18 @@ import mb.fw.paradise.util.TransactionGenerator;
 public class DBPollingAndSend implements BatchModule {
 
 	private final APIService apiService;
-	private final SndModuleService sendModuleService;
+	private final SendDBModuleService sendDBModuleService;
 
-	public DBPollingAndSend(APIService apiService, SndModuleService sendModuleService) {
+	public DBPollingAndSend(APIService apiService, SendDBModuleService sendDBModuleService) {
 		this.apiService = apiService;
-		this.sendModuleService = sendModuleService;
+		this.sendDBModuleService = sendDBModuleService;
 	}
 
 	@Override
 	public void executeTask(String interfaceId) {
 		String transactionId = TransactionIdGenerator.generate(interfaceId, TransactionGenerator.getNextSequence(),
 				TransactionGenerator.getDateTimeNow());
-		log.info("interface '{}' excute -> [{}]", interfaceId, transactionId);
+		log.info("Batch interface start '{}' -> [{}]", interfaceId, transactionId);
 
 		InterfaceInfo interfaceInfo = apiService.getInterfaceInfo(interfaceId);
 		String targetPatternType = interfaceInfo.getTargetPatternType();
@@ -51,18 +52,21 @@ public class DBPollingAndSend implements BatchModule {
 						new AbstractMap.SimpleEntry<>(ESBCommonFieldConstants.ESB_TX_ID, transactionId))
 				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-		if (sendModuleService.update(tableNameList, queryList, params) > 0) {
+		// 데이터 업데이트 'N' -> 'P'
+		if (sendDBModuleService.update(tableNameList, queryList, params) > 0) {
 			log.info("송신할 데이터 없음...");
 			return;
 		}
 
-		apiService
-				.callGateway(APIReqeustMessage.builder().interfaceId(interfaceId)
+		// 데이터 조회 후 Gateway 호출
+		apiService.callGateway(
+				APIReqeustMessage.builder().interfaceId(interfaceId).transactionId(transactionId)
 						.dataItem(DataItem.builder()
-								.table(sendModuleService.getTableData(tableNameList, queryList, params)).build())
-						.build(), TargetModule.fromPatternType(targetPatternType))
-				.subscribe(result -> log.info("송신 완료: {}", result),
+								.table(sendDBModuleService.getTableData(tableNameList, queryList, params)).build())
+						.callBackPath(TargetModuleContextPathConstants.RESULT_DB_PROCESS).build(),
+				TargetModule.fromPatternType(targetPatternType)).subscribe(result -> log.info("송신 완료: {}", result),
 						error -> log.error("송신 오류: {}", error.getMessage(), error));
+		log.info("Batch interface end '{}' -> [{}]", interfaceId, transactionId);
 	}
 
 }

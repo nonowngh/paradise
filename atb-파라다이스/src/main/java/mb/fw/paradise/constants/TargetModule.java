@@ -25,4 +25,8 @@ public enum TargetModule {
 		return Arrays.stream(TargetModule.values()).filter(value -> value.getPatternType().equals(patternType)).findFirst()
 				.orElseThrow(() -> new IllegalArgumentException("Invalid pattern-type : " + patternType));
 	}
+	
+    public static String getContextPath(TargetModule targetModule) {
+        return targetModule.getContextPath();
+    }
 }
