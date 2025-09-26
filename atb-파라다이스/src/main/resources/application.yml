@@ -4,6 +4,7 @@ server:
 web:
   client:
     interface-info-url: http://127.0.0.1:8090
+    gateway-url: http://127.0.0.1:28000
 
 module:
   register-prop:

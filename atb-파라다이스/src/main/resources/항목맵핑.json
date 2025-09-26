@@ -1,0 +1,30 @@
+{
+    "TABLE": {
+        "TABLE-NAME": {
+            "SND-FIELD1": "RCV-FIELD1",
+            "SND-FIELD2": "RCV-FIELD2",
+            "SND-FIELD3": "RCV-FIELD3",
+            "SND-FIELD4": "RCV-FIELD4",
+            "SND-FIELD5": "RCV-FIELD5",
+            "SND-FIELD6": "RCV-FIELD6"
+        }
+    },
+    "STRUCTURE": {
+        "STRUCTURE-NAME": {
+            "SND-FIELD1": "RCV-FIELD1",
+            "SND-FIELD2": "RCV-FIELD2",
+            "SND-FIELD3": "RCV-FIELD3",
+            "SND-FIELD4": "RCV-FIELD4",
+            "SND-FIELD5": "RCV-FIELD5",
+            "SND-FIELD6": "RCV-FIELD6"
+        }
+    },
+    "PARAMETER": {
+        "SND-FIELD1": "RCV-FIELD1",
+        "SND-FIELD2": "RCV-FIELD2",
+        "SND-FIELD3": "RCV-FIELD3",
+        "SND-FIELD4": "RCV-FIELD4",
+        "SND-FIELD5": "RCV-FIELD5",
+        "SND-FIELD6": "RCV-FIELD6"
+    }
+}

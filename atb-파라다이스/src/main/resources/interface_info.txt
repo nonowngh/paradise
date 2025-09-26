@@ -1,6 +1,0 @@
-인터페이스 아이디
-크론 스케줄(ex> * * * * * ?)
-타겟 패턴 타입(ex> DBInsert)
-송수신 쿼리(select, update, result-update, insert, update, delete)
-송신 테이블 명 나열
-수신 테이블 명 나열

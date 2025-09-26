@@ -11,7 +11,9 @@ public class APIResponseMessage {
 	
 	private DataItem dataItem;
 	
-	private String targetPatternType;
+	private String statusCode;
+	
+	private String statusMessage;
 	
 }
 

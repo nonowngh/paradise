@@ -9,7 +9,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import lombok.extern.slf4j.Slf4j;
 import mb.fw.paradise.api.model.InterfaceInfo;
-import mb.fw.paradise.constants.TargetModule;
+import mb.fw.paradise.constants.PatternType;
 import mb.fw.paradise.dto.APIReqeustMessage;
 import mb.fw.paradise.dto.APIResponseMessage;
 import reactor.core.publisher.Mono;
@@ -35,8 +35,10 @@ public class APIService {
 				.block();
 	}
 
-	public Mono<APIResponseMessage> callGateway(APIReqeustMessage request, TargetModule targetModule) {
-		return gatewayWebClient.post().uri(targetModule.getContextPath()).bodyValue(request).retrieve()
+	public Mono<APIResponseMessage> callGateway(APIReqeustMessage request, PatternType patternType,
+			String targetSystemCode) {
+		return gatewayWebClient.post().uri(targetSystemCode + patternType.getTargetContextPath()).bodyValue(request)
+				.retrieve()
 				.onStatus(HttpStatus::isError,
 						clientResponse -> clientResponse.bodyToMono(String.class)
 								.flatMap(errorBody -> Mono.error(new RuntimeException("Error: " + errorBody))))

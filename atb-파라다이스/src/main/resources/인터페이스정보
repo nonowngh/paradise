@@ -1,0 +1,34 @@
+-공통-
+인터페이스 아이디
+크론 스케줄(ex> * * * * * ?)
+타겟 패턴 타입(ex> DBInsert)
+송수신 시스템코드('PCB', 'EHR', 'SAP')
+매핑 처리 유무('Y','N')
+패턴('D2D','A2D','D2R','R2D','A2R')
+-DB-
+처리타입('I', 'D|I', 'U', 'I|P')
+송수신 쿼리(select, update, result-update, insert, update, delete)
+테이블 명 나열
+마스터 테이블, 디테일 테이블 설정
+-RFC-
+FUNCTION 명
+테이블 명 나열(맵핑 DB2SAP)
+파라미터 명 나열(맵핑 API2SAP)
+EXPORT OBJECT('TABLE','STRUCTURE','PARAMETER')
+IMPORT OBJECT('TABLE','STRUCTURE','PARAMETER')
+-API-
+입력/조회 구분
+테이블 명 나열
+마스터 테이블, 디테일 테이블 설정
+
+패턴 정의
+1. DB2DB : 송신 DB 조회 후 타겟 DB에 입력 및 업데이트
+2. API2DB : 송신 파라미터를 통해 타겟 DB에서 조회 후 리턴
+3. API(DB)2DB : 송신 파라미터를 통해 송신 DB 조회 후 타겟 DB에 입력 및 업데이트
+4. DB2RFC : 송신 DB 조회 후 타겟 RFC 호출하여 입력
+5. RFC(배치)2DB : 송신 파라미터로 RFC 데이터를 조회한 후 타겟 DB에 입력 및 업데이트
+6. RFC(서버)2DB : RFC를 통해 요청받은 데이터를 타겟 DB에 입력 및 업데이트
+7. API2RFC : 송신 파라미터를 통해 타겟 RFC 호출하여 입력, 결과 리턴
+8. API(DB)2RFC : 송신파라미터를 통해 송신 DB 조회 후 타겟 RFC 에 데이터 입력 결과 업데이트
+9. RFC2API : RFC 조회한 데이터를 
+

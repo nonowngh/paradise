@@ -1,11 +1,14 @@
-package mb.fw.paradise.service;
+package mb.fw.paradise.module.service;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.sql.DataSource;
+
 import org.mybatis.spring.SqlSessionTemplate;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 
 import mb.fw.paradise.api.model.SqlQuery;
@@ -13,6 +16,7 @@ import mb.fw.paradise.constants.SQLConstants;
 import mb.fw.paradise.dto.DataItem.Table;
 
 @Service
+@ConditionalOnBean(DataSource.class)
 public class SendDBModuleService {
 
 	private final SqlSessionTemplate sqlSessionTemplate;
