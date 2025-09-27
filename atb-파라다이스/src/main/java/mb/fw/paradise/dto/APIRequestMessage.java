@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class APIReqeustMessage {
+public class APIRequestMessage {
 
 	private String interfaceId;
 	

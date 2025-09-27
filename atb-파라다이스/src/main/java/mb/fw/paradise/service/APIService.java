@@ -10,7 +10,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import lombok.extern.slf4j.Slf4j;
 import mb.fw.paradise.api.model.InterfaceInfo;
 import mb.fw.paradise.constants.PatternType;
-import mb.fw.paradise.dto.APIReqeustMessage;
+import mb.fw.paradise.dto.APIRequestMessage;
 import mb.fw.paradise.dto.APIResponseMessage;
 import reactor.core.publisher.Mono;
 
@@ -27,17 +27,15 @@ public class APIService {
 		this.gatewayWebClient = gatewayWebClient;
 	}
 
-	public InterfaceInfo getInterfaceInfo(String interfaceId) {
+	public Mono<InterfaceInfo> getInterfaceInfo(String interfaceId) {
 		return interfaceInfoWebClient.get().uri(uriBuilder -> uriBuilder.queryParam("interfaceId", interfaceId).build())
-				.retrieve().bodyToMono(InterfaceInfo.class)
-				.switchIfEmpty(
-						Mono.error(new NoSuchElementException("InterfaceInfo not found for id : " + interfaceId)))
-				.block();
+				.retrieve().bodyToMono(InterfaceInfo.class).switchIfEmpty(
+						Mono.error(new NoSuchElementException("InterfaceInfo not found for id : " + interfaceId)));
 	}
 
-	public Mono<APIResponseMessage> callGateway(APIReqeustMessage request, PatternType patternType,
+	public Mono<APIResponseMessage> callGateway(APIRequestMessage request, PatternType patternType,
 			String targetSystemCode) {
-		return gatewayWebClient.post().uri(targetSystemCode + patternType.getTargetContextPath()).bodyValue(request)
+		return gatewayWebClient.post().uri(patternType.getTargetContextPath()).bodyValue(request)
 				.retrieve()
 				.onStatus(HttpStatus::isError,
 						clientResponse -> clientResponse.bodyToMono(String.class)
@@ -55,4 +53,5 @@ public class APIService {
 					log.info("결과 전송 완료");
 				});
 	}
+
 }

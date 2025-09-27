@@ -8,6 +8,7 @@ web:
 
 module:
   register-prop:
+    system-code: EAS
     batch-task: DBPollingAndSend
     interface-list:
       - IF_TEST_01
