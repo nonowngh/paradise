@@ -12,12 +12,12 @@ import reactor.core.publisher.Mono;
 
 @Slf4j
 @Component
-public class DBProcessHandler {
+public class DBReceiveProcessHandler {
 
 	private final ReceiveDBModuleService receiveDBModuleService;
 	private final APIService apiService;
 
-	public DBProcessHandler(APIService apiService, ReceiveDBModuleService receiveDBModuleService) {
+	public DBReceiveProcessHandler(APIService apiService, ReceiveDBModuleService receiveDBModuleService) {
 		this.receiveDBModuleService = receiveDBModuleService;
 		this.apiService = apiService;
 	}
@@ -37,7 +37,7 @@ public class DBProcessHandler {
 				.onErrorMap(error -> {
 					log.error("Error [dbProcess] -> {}", error.getMessage()); // 에러 처리
 					return new RuntimeException(error.getMessage(), error);
-				}).then(ServerResponse.ok().build());
+				}).then(ServerResponse.ok().bodyValue("[dbProcess] 요청 수신 완료."));
 	}
 
 }

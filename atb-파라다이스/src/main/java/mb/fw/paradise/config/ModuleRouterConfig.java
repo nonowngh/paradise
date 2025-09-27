@@ -11,7 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 import mb.fw.paradise.constants.AdaptorConstants;
 import mb.fw.paradise.constants.TargetContextPathConstants;
 import mb.fw.paradise.dto.APIRequestMessage;
-import mb.fw.paradise.module.handler.DBProcessHandler;
+import mb.fw.paradise.dto.APIResponseMessage;
+import mb.fw.paradise.module.handler.DBReceiveProcessHandler;
+import mb.fw.paradise.module.handler.DBResultProcessHandler;
 import mb.fw.paradise.module.handler.RFCCallHandler;
 import mb.fw.paradise.service.ExceptionService;
 
@@ -26,7 +28,7 @@ public class ModuleRouterConfig {
 	}
 
 	@Bean
-	RouterFunction<ServerResponse> routes(DBProcessHandler dbProcessHandler, RFCCallHandler rfcCallHandler) {
+	RouterFunction<ServerResponse> receiveRoutes(DBReceiveProcessHandler dbProcessHandler, RFCCallHandler rfcCallHandler) {
 		return RouterFunctions.route()
 				.POST(TargetContextPathConstants.DEFAULT_PATH + AdaptorConstants.MY_SYSTEM_CODE
 						+ TargetContextPathConstants.RCV_DB_PROCESS, dbProcessHandler::dbProcess)
@@ -34,12 +36,30 @@ public class ModuleRouterConfig {
 						+ TargetContextPathConstants.RCV_RFC_CALL, rfcCallHandler::rfcCall)
 				.build().filter(logRequestAndResponse()).filter(moduleExceptionHandler());
 	}
+	
+	@Bean
+	RouterFunction<ServerResponse> sendRoutes(DBResultProcessHandler DBResultProcessHandler) {
+		return RouterFunctions.route()
+				.POST(TargetContextPathConstants.DEFAULT_PATH + AdaptorConstants.MY_SYSTEM_CODE
+						+ TargetContextPathConstants.RESULT_DB_PROCESS, DBResultProcessHandler::dbResultProcess)
+				.build().filter(logRequestAndResponse()).filter(moduleResultExceptionHandler());
+	}
 
 	private HandlerFilterFunction<ServerResponse, ServerResponse> moduleExceptionHandler() {
 		return (request, next) -> request.bodyToMono(APIRequestMessage.class).flatMap(dto -> {
 			request.attributes().put("cachedBody", dto);
 			return next.handle(request).onErrorResume(e -> {
 				exceptionService.exceptionProcess(e, dto);
+				return ServerResponse.noContent().build();
+			});
+		});
+	}
+	
+	private HandlerFilterFunction<ServerResponse, ServerResponse> moduleResultExceptionHandler() {
+		return (request, next) -> request.bodyToMono(APIResponseMessage.class).flatMap(dto -> {
+			request.attributes().put("cachedBody", dto);
+			return next.handle(request).onErrorResume(e -> {
+				log.error("Error result handler -> ", e);
 				return ServerResponse.noContent().build();
 			});
 		});
