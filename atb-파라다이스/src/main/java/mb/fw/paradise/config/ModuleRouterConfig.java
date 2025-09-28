@@ -49,7 +49,7 @@ public class ModuleRouterConfig {
 		return (request, next) -> request.bodyToMono(APIRequestMessage.class).flatMap(dto -> {
 			request.attributes().put("cachedBody", dto);
 			return next.handle(request).onErrorResume(e -> {
-				exceptionService.exceptionProcess(e, dto);
+				exceptionService.receiveHandlerExceptionProcess(e, dto);
 				return ServerResponse.noContent().build();
 			});
 		});

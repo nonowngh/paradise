@@ -17,7 +17,7 @@ public class ExceptionService {
 		this.apiService = apiService;
 	}
 
-	public void exceptionProcess(Throwable e, APIRequestMessage request) {
+	public void receiveHandlerExceptionProcess(Throwable e, APIRequestMessage request) {
 
 		log.error("Handler error -> ", e);
 
