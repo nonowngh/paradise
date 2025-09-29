@@ -1,4 +1,4 @@
-package mb.fw.paradise.module.service;
+package mb.fw.paradise.module.service.sqlexcutor;
 
 import java.util.List;
 import java.util.Map;
@@ -21,7 +21,7 @@ import mb.fw.paradise.dto.DataItem.Table;
 
 @Service
 @ConditionalOnBean(DataSource.class)
-public class InsertQueryExecutor {
+public class ReceiveQueryExecutor {
 
 	@Qualifier("simpleSqlSessionTemplate")
 	private final SqlSessionTemplate simpleSqlSessionTemplate;
@@ -30,7 +30,7 @@ public class InsertQueryExecutor {
 
 	private final MyBatisConfig config;
 
-	public InsertQueryExecutor(SqlSessionTemplate simpleSqlSessionTemplate, SqlSessionTemplate batchSqlSessionTemplate,
+	public ReceiveQueryExecutor(SqlSessionTemplate simpleSqlSessionTemplate, SqlSessionTemplate batchSqlSessionTemplate,
 			MyBatisConfig config) {
 		this.simpleSqlSessionTemplate = simpleSqlSessionTemplate;
 		this.batchSqlSessionTemplate = batchSqlSessionTemplate;

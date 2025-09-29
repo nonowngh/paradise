@@ -1,4 +1,4 @@
-package mb.fw.paradise.module.service;
+package mb.fw.paradise.module.service.sqlexcutor;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -17,11 +17,11 @@ import mb.fw.paradise.dto.DataItem.Table;
 
 @Service
 @ConditionalOnBean(DataSource.class)
-public class SendDBModuleService {
+public class SendQueryExecutor {
 
 	private final SqlSessionTemplate sqlSessionTemplate;
 
-	public SendDBModuleService(SqlSessionTemplate sqlSessionTemplate) {
+	public SendQueryExecutor(SqlSessionTemplate sqlSessionTemplate) {
 		this.sqlSessionTemplate = sqlSessionTemplate;
 	}
 
@@ -50,10 +50,11 @@ public class SendDBModuleService {
 		return Table.builder().tableItem(tableItem).build();
 	}
 
-	public int updateResult(List<String> tableNameList, List<SqlQuery> sqlQueryList, Map<String, Object> params) {
+	public int resultUpdate(List<String> tableNameList, List<SqlQuery> queryList, Map<String, Object> params) {
 		int updateCount = 0;
+
 		for (String tableName : tableNameList) {
-			Optional<SqlQuery> result = sqlQueryList.stream()
+			Optional<SqlQuery> result = queryList.stream()
 					.filter(q -> (SQLConstants.SQL_ID_UPDATE_REUSLT + "." + tableName).equals(q.getSqlId()))
 					.findFirst();
 			if (result.isPresent()) {
