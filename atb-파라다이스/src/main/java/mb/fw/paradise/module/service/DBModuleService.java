@@ -18,8 +18,8 @@ import mb.fw.paradise.constants.ESBStatusConstants;
 import mb.fw.paradise.dto.APIRequestMessage;
 import mb.fw.paradise.dto.APIResponseMessage;
 import mb.fw.paradise.dto.DataItem;
-import mb.fw.paradise.module.service.sqlexcutor.ReceiveQueryExecutor;
-import mb.fw.paradise.module.service.sqlexcutor.SendQueryExecutor;
+import mb.fw.paradise.module.service.sqlexecutor.ReceiveQueryExecutor;
+import mb.fw.paradise.module.service.sqlexecutor.SendQueryExecutor;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 

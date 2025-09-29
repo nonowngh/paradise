@@ -1,4 +1,4 @@
-package mb.fw.paradise.module.service.sqlexcutor;
+package mb.fw.paradise.module.service.sqlexecutor;
 
 import java.util.List;
 import java.util.Map;
