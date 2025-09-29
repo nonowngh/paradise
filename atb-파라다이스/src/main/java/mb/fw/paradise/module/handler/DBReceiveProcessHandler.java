@@ -30,13 +30,11 @@ public class DBReceiveProcessHandler {
 		}
 		return apiService.getInterfaceInfo(request.getInterfaceId()) // 인터페이스 정보 조회
 				.flatMap(interfaceInfo -> dbModuleService.dbProcessAndResponse(interfaceInfo, request) // DB 처리
-						.doOnNext(result -> {
-							apiService.callGatewayForResult(result, request.getCallBackPath()); // 결과 호출
-						}))
-				.onErrorMap(error -> {
-					log.error("Error [dbProcess] -> {}", error.getMessage()); // 에러 처리
-					return new RuntimeException(error.getMessage(), error);
-				}).then(ServerResponse.ok().bodyValue("[dbProcess] 요청 수신 완료."));
+						.doOnNext(result -> apiService.callGatewayForResult(result, request.getCallBackPath()) // 결과 호출
+						)).onErrorMap(error -> {
+							log.error("Error [dbProcess] -> {}", error.getMessage(), error); // 에러 처리
+							return new RuntimeException(error.getMessage(), error);
+						}).then(ServerResponse.ok().bodyValue("[dbProcess] 요청 수신 완료."));
 	}
 
 }

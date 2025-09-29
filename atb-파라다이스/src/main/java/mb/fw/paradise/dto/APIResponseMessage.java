@@ -17,5 +17,7 @@ public class APIResponseMessage {
 	
 	private String statusMessage;
 	
+	private int errorDataCount;
+	
 }
 

@@ -9,28 +9,29 @@ import org.springframework.stereotype.Service;
 
 import lombok.extern.slf4j.Slf4j;
 import mb.fw.atb.util.ATBUtil;
+import mb.fw.paradise.dto.APIRequestMessage;
+import mb.fw.paradise.dto.APIResponseMessage;
 
 @Slf4j
 @Service
 public class LoggingService {
 
 	@Async
-	public void asyncStartLogging(JmsTemplate jmsTemplate, String ifId, String txId, String sndCd, String rcvCd) {
+	public void asyncStartLogging(JmsTemplate jmsTemplate, APIRequestMessage message) {
 		String nowDateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
-		log.info("jms start logging[{}]", txId);
+		log.debug("jms start logging[{}]", message.getTransactionId());
 		try {
-			ATBUtil.startLogging(jmsTemplate, ifId, txId, null, 1, sndCd, rcvCd, nowDateTime, null);
+			ATBUtil.startLogging(jmsTemplate, message.getInterfaceId(), message.getTransactionId(), null, 1, message.getSendSystemCode(), message.getReceiveSystemCode(), nowDateTime, null);
 		} catch (Exception e) {
 			log.error("JMS start logging error!!!", e);
 		}
 	}
 
 	@Async
-	public void asyncEndLogging(JmsTemplate jmsTemplate, String ifId, String txId, int errorCount, String statusCd,
-			String errorMsg) {
-		log.info("jms end logging[{}]", txId);
+	public void asyncEndLogging(JmsTemplate jmsTemplate, APIResponseMessage message) {
+		log.debug("jms end logging[{}]", message.getTransactionId());
 		try {
-			ATBUtil.endLogging(jmsTemplate, ifId, txId, "", errorCount, statusCd, errorMsg, null);
+			ATBUtil.endLogging(jmsTemplate, message.getInterfaceId(), message.getTransactionId(), "", message.getErrorDataCount(), message.getStatusCode(), message.getStatusMessage(), null);
 		} catch (Exception e) {
 			log.error("JMS end logging error!!!", e);
 		}

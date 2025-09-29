@@ -1,0 +1,2 @@
+DB2DB : http://'ip':'port'/esb/api/'rcvSystemCode'/rcv-db-process
+DB2RFC : http://'ip':'port'/esb/api/'rcvSystemCode'/rcv-rfc-call

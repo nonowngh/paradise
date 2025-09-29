@@ -30,12 +30,11 @@ public class DBResultProcessHandler {
 		}
 		return apiService.getInterfaceInfo(response.getInterfaceId()) // 인터페이스 정보 조회
 				.flatMap(interfaceInfo -> dbModuleService.dbResult(response, interfaceInfo) // DB 처리
-						.doOnNext(count -> log.info("Result updated rows: {}", count))
-						.flatMap(count -> ServerResponse.ok().bodyValue("[dbResultProcess] 업데이트 완료. 처리 건수: " + count)))
+						.doOnNext(count -> log.info("[dbResultProcess] 업데이트 완료. 처리 건수: {}", count)))
 				.onErrorMap(error -> {
 					log.error("Error [dbResultProcess] -> {}", error.getMessage(), error); // 에러 처리
 					return new RuntimeException(error.getMessage(), error);
-				});
+				}).then(ServerResponse.ok().bodyValue("[dbResultProcess] 요청 수신 완료."));
 	}
 
 }

@@ -33,14 +33,15 @@ public class APIService {
 						Mono.error(new NoSuchElementException("InterfaceInfo not found for id : " + interfaceId)));
 	}
 
-	public Mono<APIResponseMessage> callGateway(APIRequestMessage request, PatternType patternType,
-			String targetSystemCode) {
-		return gatewayWebClient.post().uri(patternType.getTargetContextPath()).bodyValue(request)
-				.retrieve()
+	public Mono<String> callGateway(APIRequestMessage request, PatternType patternType) {
+		return gatewayWebClient.post().uri(request.getReceiveSystemCode() + patternType.getTargetContextPath())
+				.bodyValue(request).retrieve()
 				.onStatus(HttpStatus::isError,
-						clientResponse -> clientResponse.bodyToMono(String.class)
-								.flatMap(errorBody -> Mono.error(new RuntimeException("Error: " + errorBody))))
-				.bodyToMono(APIResponseMessage.class);
+						clientResponse -> clientResponse.bodyToMono(String.class).flatMap(
+								errorBody -> Mono.error(new RuntimeException("데이터 전송 중 오류 발생 : " + errorBody))))
+				.bodyToMono(String.class).doOnTerminate(() -> {
+					log.info("데이터 전송 완료");
+				});
 	}
 
 	public Mono<String> callGatewayForResult(APIResponseMessage response, String callbackPath) {
