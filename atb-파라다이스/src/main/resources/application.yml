@@ -1,21 +1,28 @@
 server:
-  port: 29001
-
-web:
-  client:
-    interface-info-url: http://127.0.0.1:8090
-    gateway-url: http://127.0.0.1:28000
-
-module:
-  register-prop:
-    system-code: EAS
-    batch-task: DBPollingAndSend
-    interface-list:
-      - IF_TEST_01
+  port: 29000
 
 spring:
-  profiles:
-    active: local
+#  profiles:
+#    active: local
+  cache:
+    cache-names: interfaceInfoCache
+    caffeine:
+      spec: maximumSize=300,expireAfterWrite=30m
+  cloud:
+    gateway:
+      routes:
+        - id: SAP-RFC-CALL
+          uri: http://localhost:8090   # 대상 서비스 URI
+          predicates:
+            - Path=/esb/api/gateway/sap/rfc-call   # 요청 경로 조건
+          filters:
+            - name : CommonRewritePath
+        - id: PCB-DB-PROCESS
+          uri: http://localhost:8081   # 대상 서비스 URI
+          predicates:
+            - Path=/esb/api/gateway/pcb/db-process   # 요청 경로 조건
+          filters:
+            - name : CommonRewritePath
   main:
     web-application-type: reactive
     allow-bean-definition-overriding: true

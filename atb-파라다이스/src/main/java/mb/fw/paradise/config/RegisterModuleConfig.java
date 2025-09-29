@@ -19,9 +19,10 @@ import mb.fw.paradise.constants.AdaptorConstants;
 public class RegisterModuleConfig {
 
 	private RegisterProp registerProp;
-
+	
 	@PostConstruct
 	public void init() {
+		if(registerProp == null) return;
 		String batchTask = registerProp.getBatchTask();
 		if (!batchTask.isEmpty())
 			log.info("Setting property batch-task : {}", batchTask);

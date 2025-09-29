@@ -1,4 +1,4 @@
-package mb.fw.paradise.filter;
+package mb.fw.paradise.gateway.filter;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;

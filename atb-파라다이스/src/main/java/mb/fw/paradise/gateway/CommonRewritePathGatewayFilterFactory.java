@@ -1,4 +1,4 @@
-package mb.fw.paradise.filter;
+package mb.fw.paradise.gateway;
 
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;

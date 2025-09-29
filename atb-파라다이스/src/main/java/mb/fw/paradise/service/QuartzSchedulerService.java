@@ -11,6 +11,7 @@ import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.ParameterizedTypeReference;
@@ -20,6 +21,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import lombok.extern.slf4j.Slf4j;
 import mb.fw.paradise.api.model.InterfaceInfo;
 import mb.fw.paradise.config.RegisterModuleConfig;
+import mb.fw.paradise.config.prop.RegisterProp;
 import mb.fw.paradise.constants.APIContextPathConstants;
 import mb.fw.paradise.service.job.DynamicQuartzJob;
 import reactor.core.publisher.Flux;
@@ -27,6 +29,7 @@ import reactor.core.publisher.Mono;
 
 @Slf4j
 @Service
+@ConditionalOnBean(RegisterProp.class)
 public class QuartzSchedulerService {
 
 	private Scheduler scheduler;
