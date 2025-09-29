@@ -7,7 +7,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.sql.DataSource;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,12 +27,13 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 @Service
+@ConditionalOnBean(DataSource.class)
 public class DBModuleService {
 
-	@Autowired(required = false)
+	@Autowired
 	private ReceiveQueryExecutor receiveQueryExecutor;
 
-	@Autowired(required = false)
+	@Autowired
 	private SendQueryExecutor sendQueryExecutor;
 
 	@Transactional

@@ -3,13 +3,10 @@ package mb.fw.paradise.module.service.sqlexecutor;
 import java.util.List;
 import java.util.Map;
 
-import javax.sql.DataSource;
-
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 
 import mb.fw.paradise.api.model.InterfaceInfo;
@@ -20,7 +17,6 @@ import mb.fw.paradise.dto.APIRequestMessage;
 import mb.fw.paradise.dto.DataItem.Table;
 
 @Service
-@ConditionalOnBean(DataSource.class)
 public class ReceiveQueryExecutor {
 
 	@Qualifier("simpleSqlSessionTemplate")
