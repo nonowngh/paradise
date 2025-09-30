@@ -2,7 +2,6 @@ package mb.fw.paradise.module.service;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -26,6 +25,7 @@ import mb.fw.paradise.dto.APIResponseMessage;
 import mb.fw.paradise.dto.DataItem;
 import mb.fw.paradise.module.service.sqlexecutor.ReceiveQueryExecutor;
 import mb.fw.paradise.module.service.sqlexecutor.SendQueryExecutor;
+import mb.fw.paradise.util.InterfaceInfoPropertyUtil;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -42,7 +42,27 @@ public class DBModuleService {
 	@Transactional
 	public Mono<APIResponseMessage> dbProcessAndResponse(InterfaceInfo interfaceInfo, APIRequestMessage request) {
 		return Mono.fromCallable(() -> {
-			receiveQueryExecutor.processInsertQueries(interfaceInfo, request);
+			List<PatternProperty> propertyList = new ArrayList<>(interfaceInfo.getPropertyList());
+			String workType = InterfaceInfoPropertyUtil.getValue(propertyList,
+					InterfaceInfoPropertyConstants.DB_WORK_TYPE);
+			for (char ch : workType.toCharArray()) {
+				switch (ch) {
+				case 'D':
+					receiveQueryExecutor.processDeleteQueries(interfaceInfo, request);
+					break;
+				case 'I':
+					receiveQueryExecutor.processInsertQueries(interfaceInfo, request);
+					break;
+//				case 'U':
+//					receiveQueryExecutor.processUpdateQueries(interfaceInfo, request);
+//					break;
+//				case 'P':
+//					receiveQueryExecutor.processProcedureQueries(interfaceInfo, request);
+//					break;
+				default:
+					throw new IllegalArgumentException("지원하지 않는 작업 유형: " + ch);
+				}
+			}
 			return APIResponseMessage.builder().statusCode(ESBStatusConstants.SUCCESS)
 					.interfaceId(request.getInterfaceId()).transactionId(request.getTransactionId())
 					.totalDataCount(request.getTotalDataCount()).build();
@@ -55,51 +75,49 @@ public class DBModuleService {
 	public Mono<Integer> dbResult(APIResponseMessage response, InterfaceInfo interfaceInfo) {
 		return Mono.fromCallable(() -> {
 			List<PatternProperty> propertyList = new ArrayList<>(interfaceInfo.getPropertyList());
-			List<String> tableNameList = propertyList.stream()
-					.filter(property -> InterfaceInfoPropertyConstants.DB_SEND_TABLE_NAMES.equals(property.getPropertyName()))
-					.flatMap(p -> Arrays.stream(p.getPropertyValue().split(","))).map(String::trim)
-					.filter(s -> !s.isEmpty()).collect(Collectors.toList());
+			List<String> sendTableNameList = InterfaceInfoPropertyUtil.getValueList(propertyList,
+					InterfaceInfoPropertyConstants.SEND_TABLE_NAMES);
 			List<SqlQuery> queryList = new ArrayList<>(interfaceInfo.getSqlQueryList());
 			Map<String, Object> params = Stream
 					.of(new AbstractMap.SimpleEntry<>(ESBCommonFieldConstants.ESB_IF_ID, response.getInterfaceId()),
 							new AbstractMap.SimpleEntry<>(ESBCommonFieldConstants.ESB_TX_ID,
 									response.getTransactionId()))
 					.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-			return sendQueryExecutor.resultUpdate(tableNameList, queryList, params);
+			return sendQueryExecutor.resultUpdate(sendTableNameList, queryList, params);
 		}).subscribeOn(Schedulers.boundedElastic());
 	}
 
 	public Mono<Integer> markSendData(InterfaceInfo interfaceInfo, String transactionId) {
 		return Mono.fromCallable(() -> {
 			List<PatternProperty> propertyList = new ArrayList<>(interfaceInfo.getPropertyList());
-			List<String> tableNameList = propertyList.stream()
-					.filter(property -> InterfaceInfoPropertyConstants.DB_SEND_TABLE_NAMES.equals(property.getPropertyName()))
-					.flatMap(p -> Arrays.stream(p.getPropertyValue().split(","))).map(String::trim)
-					.filter(s -> !s.isEmpty()).collect(Collectors.toList());
+			List<String> sendTableNameList = InterfaceInfoPropertyUtil.getValueList(propertyList,
+					InterfaceInfoPropertyConstants.SEND_TABLE_NAMES);
 			List<SqlQuery> queryList = new ArrayList<>(interfaceInfo.getSqlQueryList());
 			Map<String, Object> params = Stream
 					.of(new AbstractMap.SimpleEntry<>(ESBCommonFieldConstants.ESB_IF_ID,
 							interfaceInfo.getInterfaceId()),
 							new AbstractMap.SimpleEntry<>(ESBCommonFieldConstants.ESB_TX_ID, transactionId))
 					.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-			return sendQueryExecutor.update(tableNameList, queryList, params);
+			return sendQueryExecutor.update(sendTableNameList, queryList, params);
 		}).subscribeOn(Schedulers.boundedElastic());
 	}
 
 	public Mono<DataItem> getSendData(InterfaceInfo interfaceInfo, String transactionId) {
 		return Mono.fromCallable(() -> {
 			List<PatternProperty> propertyList = new ArrayList<>(interfaceInfo.getPropertyList());
-			List<String> tableNameList = propertyList.stream()
-					.filter(property -> InterfaceInfoPropertyConstants.DB_SEND_TABLE_NAMES.equals(property.getPropertyName()))
-					.flatMap(p -> Arrays.stream(p.getPropertyValue().split(","))).map(String::trim)
-					.filter(s -> !s.isEmpty()).collect(Collectors.toList());
+			List<String> sendTableNameList = InterfaceInfoPropertyUtil.getValueList(propertyList,
+					InterfaceInfoPropertyConstants.SEND_TABLE_NAMES);
+			List<String> recvTableNameList = InterfaceInfoPropertyUtil.getValueList(propertyList,
+					InterfaceInfoPropertyConstants.RECV_TABLE_NAMES);
 			List<SqlQuery> queryList = new ArrayList<>(interfaceInfo.getSqlQueryList());
 			Map<String, Object> params = Stream
 					.of(new AbstractMap.SimpleEntry<>(ESBCommonFieldConstants.ESB_IF_ID,
 							interfaceInfo.getInterfaceId()),
 							new AbstractMap.SimpleEntry<>(ESBCommonFieldConstants.ESB_TX_ID, transactionId))
 					.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-			return DataItem.builder().table(sendQueryExecutor.getTableData(tableNameList, queryList, params)).build();
+			return DataItem.builder()
+					.table(sendQueryExecutor.getTableData(sendTableNameList, recvTableNameList, queryList, params))
+					.build();
 		}).subscribeOn(Schedulers.boundedElastic());
 	}
 

@@ -36,14 +36,20 @@ public class SendQueryExecutor {
 		return updateCount;
 	}
 
-	public Table getTableData(List<String> tableNameList, List<SqlQuery> queryList, Map<String, Object> params) {
+	public Table getTableData(List<String> sendTableNameList, List<String> recvTableNameList, List<SqlQuery> queryList,
+			Map<String, Object> params) {
 		// 데이터 조회
 		LinkedHashMap<String, List<Map<String, Object>>> tableItem = new LinkedHashMap<>();
-		for (String tableName : tableNameList) {
+		for (String tableName : sendTableNameList) {
+			int index = sendTableNameList.indexOf(tableName);
+			if (index < 0 || index >= recvTableNameList.size()) {
+				continue; // 해당 테이블에 대한 수신 테이블명이 없으면 skip
+			}
 			Optional<SqlQuery> result = queryList.stream()
 					.filter(q -> (SQLConstants.SQL_ID_SELECT + "." + tableName).equals(q.getSqlId())).findFirst();
 			if (result.isPresent()) {
-				tableItem.put(tableName, sqlSessionTemplate.selectList(result.get().getQuery(), params));
+				tableItem.put(recvTableNameList.get(index),
+						sqlSessionTemplate.selectList(result.get().getQuery(), params));
 			}
 		}
 		return Table.builder().tableItem(tableItem).build();

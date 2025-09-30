@@ -79,4 +79,4 @@ LEFT JOIN interface.tb_interface_detail detail
     ON info.interface_id = detail.interface_id
 LEFT JOIN interface.tb_interface_query query
     ON info.interface_id = query.interface_id
-WHERE info.interface_id = 'IF_001';
+WHERE info.interface_id = 'IF_001' and info.use_yn = 'Y';

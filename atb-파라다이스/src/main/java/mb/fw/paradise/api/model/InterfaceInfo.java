@@ -23,12 +23,4 @@ public class InterfaceInfo {
 	
 	private Set<SqlQuery> sqlQueryList = new LinkedHashSet<>();
 
-	// // DB 패턴
-//	private String sndTableNames;
-//	
-//	private String rcvTableNames;
-//	
-//	
-//	private String workType;
-
 }

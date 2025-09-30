@@ -34,6 +34,17 @@ public class ReceiveQueryExecutor {
 		this.config = config;
 	}
 
+	public void processDeleteQueries(InterfaceInfo interfaceInfo, APIRequestMessage request) {
+		List<SqlQuery> queryList = new ArrayList<>(interfaceInfo.getSqlQueryList());
+		Table tableData = request.getDataItem().getTable();
+		tableData.getTableItem().forEach((tableName, data) -> {
+			String expectedSqlId = SQLConstants.SQL_ID_DELETE + "." + tableName;
+			queryList.stream().filter(q -> expectedSqlId.equals(q.getSqlId())).findFirst().ifPresent(query -> {
+				simpleSqlSessionTemplate.delete(query.getQuery());
+			});
+		});
+	}
+
 	public void processInsertQueries(InterfaceInfo interfaceInfo, APIRequestMessage request) {
 		List<SqlQuery> queryList = new ArrayList<>(interfaceInfo.getSqlQueryList());
 		Table tableData = request.getDataItem().getTable();
@@ -67,4 +78,5 @@ public class ReceiveQueryExecutor {
 			batchSession.close(); // ✅ 세션 종료
 		}
 	}
+
 }
