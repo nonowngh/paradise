@@ -11,7 +11,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import lombok.extern.slf4j.Slf4j;
 import mb.fw.paradise.api.model.InterfaceInfo;
 import mb.fw.paradise.constants.ESBAPIHeaderConstants;
-import mb.fw.paradise.constants.PatternType;
 import mb.fw.paradise.dto.APIRequestMessage;
 import mb.fw.paradise.dto.APIResponseMessage;
 import reactor.core.publisher.Mono;
@@ -35,9 +34,9 @@ public class APIService {
 						Mono.error(new NoSuchElementException("InterfaceInfo not found for id : " + interfaceId)));
 	}
 
-	public Mono<String> callGateway(APIRequestMessage request, PatternType patternType, String sendSystemCode,
+	public Mono<String> callGateway(APIRequestMessage request, String targetPath, String sendSystemCode,
 			String receiveSystemCode, String callBackPath) {
-		return gatewayWebClient.post().uri(receiveSystemCode + patternType.getTargetContextPath()).headers(headers -> {
+		return gatewayWebClient.post().uri(targetPath).headers(headers -> {
 			headers.setContentType(MediaType.APPLICATION_JSON);
 			headers.set(ESBAPIHeaderConstants.INTERFACE_ID, request.getInterfaceId());
 			headers.set(ESBAPIHeaderConstants.TRANSACTION_ID, request.getTransactionId());
