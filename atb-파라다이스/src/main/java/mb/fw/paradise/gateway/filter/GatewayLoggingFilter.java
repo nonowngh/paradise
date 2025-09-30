@@ -54,6 +54,7 @@ public class GatewayLoggingFilter implements GlobalFilter {
 		String esbStatusMessage = HttpHeaderUtil.getHeader(headers, ESBAPIHeaderConstants.ESB_STATUS_MESSAGE);
 		int totalCount = HttpHeaderUtil.getIntHeader(headers, ESBAPIHeaderConstants.TOTAL_COUNT);
 		int errorCount = HttpHeaderUtil.getIntHeader(headers, ESBAPIHeaderConstants.ERROR_COUNT);
+		String callBackPath = HttpHeaderUtil.getHeader(headers, ESBAPIHeaderConstants.CALL_BACK_PATH);
 
 		// 후처리에 필요한 정보 저장
 		exchange.getAttributes().put("interfaceId", interfaceId);
@@ -64,6 +65,7 @@ public class GatewayLoggingFilter implements GlobalFilter {
 		exchange.getAttributes().put("esbStatusMessage", esbStatusMessage);
 		exchange.getAttributes().put("totalCount", totalCount);
 		exchange.getAttributes().put("errorCount", errorCount);
+		exchange.getAttributes().put("callBackPath", callBackPath);
 
 		return chain.filter(exchange).doFinally(signalType -> {
 			HttpStatus statusCode = exchange.getResponse().getStatusCode();

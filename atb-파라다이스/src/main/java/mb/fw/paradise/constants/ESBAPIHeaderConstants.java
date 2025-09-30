@@ -12,5 +12,6 @@ public class ESBAPIHeaderConstants {
 	public static final String ESB_STATUS_MESSAGE = "X-ESB-Status-Message";
 	public static final String TOTAL_COUNT = "X-Total-Count";
 	public static final String ERROR_COUNT = "X-Error-Count";
+	public static final String CALL_BACK_PATH = "X-Call-Back-Path";
 
 }

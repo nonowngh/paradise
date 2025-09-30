@@ -3,6 +3,7 @@ package mb.fw.paradise.config;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.reactive.function.server.HandlerFilterFunction;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.RouterFunctions;
@@ -12,8 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import mb.fw.paradise.config.prop.RegisterProp;
 import mb.fw.paradise.constants.AdaptorConstants;
 import mb.fw.paradise.constants.TargetContextPathConstants;
-import mb.fw.paradise.dto.APIRequestMessage;
-import mb.fw.paradise.dto.APIResponseMessage;
 import mb.fw.paradise.module.handler.DBReceiveProcessHandler;
 import mb.fw.paradise.module.handler.DBResultProcessHandler;
 import mb.fw.paradise.module.handler.RFCCallHandler;
@@ -31,7 +30,8 @@ public class ModuleRouterConfig {
 	}
 
 	@Bean
-	RouterFunction<ServerResponse> receiveRoutes(DBReceiveProcessHandler dbProcessHandler, RFCCallHandler rfcCallHandler) {
+	RouterFunction<ServerResponse> receiveRoutes(DBReceiveProcessHandler dbProcessHandler,
+			RFCCallHandler rfcCallHandler) {
 		return RouterFunctions.route()
 				.POST(TargetContextPathConstants.DEFAULT_PATH + AdaptorConstants.MY_SYSTEM_CODE
 						+ TargetContextPathConstants.RCV_DB_PROCESS, dbProcessHandler::dbProcess)
@@ -39,7 +39,7 @@ public class ModuleRouterConfig {
 						+ TargetContextPathConstants.RCV_RFC_CALL, rfcCallHandler::rfcCall)
 				.build().filter(logRequestAndResponse()).filter(moduleExceptionHandler());
 	}
-	
+
 	@Bean
 	RouterFunction<ServerResponse> sendRoutes(DBResultProcessHandler DBResultProcessHandler) {
 		return RouterFunctions.route()
@@ -48,24 +48,33 @@ public class ModuleRouterConfig {
 				.build().filter(logRequestAndResponse()).filter(moduleResultExceptionHandler());
 	}
 
+//	private HandlerFilterFunction<ServerResponse, ServerResponse> moduleExceptionHandler() {
+//		return (request, next) -> request.bodyToMono(APIRequestMessage.class).flatMap(dto -> {
+//			request.attributes().put("cachedBody", dto);
+//			return next.handle(request).onErrorResume(e -> {
+//				exceptionService.receiveHandlerExceptionProcess(e, dto);
+//				return ServerResponse.noContent().build();
+//			});
+//		});
+//	}
 	private HandlerFilterFunction<ServerResponse, ServerResponse> moduleExceptionHandler() {
-		return (request, next) -> request.bodyToMono(APIRequestMessage.class).flatMap(dto -> {
-			request.attributes().put("cachedBody", dto);
+		return (request, next) -> {
+			HttpHeaders headers = request.headers().asHttpHeaders();
 			return next.handle(request).onErrorResume(e -> {
-				exceptionService.receiveHandlerExceptionProcess(e, dto);
+				exceptionService.receiveHandlerExceptionProcess(e, headers);
 				return ServerResponse.noContent().build();
 			});
-		});
+		};
 	}
-	
+
 	private HandlerFilterFunction<ServerResponse, ServerResponse> moduleResultExceptionHandler() {
-		return (request, next) -> request.bodyToMono(APIResponseMessage.class).flatMap(dto -> {
-			request.attributes().put("cachedBody", dto);
+		return (request, next) -> {
+//			HttpHeaders headers = request.headers().asHttpHeaders();
 			return next.handle(request).onErrorResume(e -> {
 				log.error("Error result handler -> ", e);
 				return ServerResponse.noContent().build();
 			});
-		});
+		};
 	}
 
 	private HandlerFilterFunction<ServerResponse, ServerResponse> logRequestAndResponse() {

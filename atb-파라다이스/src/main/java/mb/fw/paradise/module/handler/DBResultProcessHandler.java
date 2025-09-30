@@ -23,14 +23,11 @@ public class DBResultProcessHandler {
 	}
 
 	public Mono<ServerResponse> dbResultProcess(ServerRequest serverRequest) {
-		APIResponseMessage response = (APIResponseMessage) serverRequest.attributes().get("cachedBody");
-
-		if (response == null) {
-			return ServerResponse.badRequest().bodyValue("요청 body가 존재하지 않습니다.");
-		}
-		return apiService.getInterfaceInfo(response.getInterfaceId()) // 인터페이스 정보 조회
-				.flatMap(interfaceInfo -> dbModuleService.dbResult(response, interfaceInfo) // DB 처리
-						.doOnNext(count -> log.info("[dbResultProcess] 업데이트 완료. 처리 건수: {}", count)))
+		return serverRequest.bodyToMono(APIResponseMessage.class)
+				.switchIfEmpty(Mono.error(new IllegalArgumentException("요청 body가 존재하지 않습니다."))) // body 없을 때 에러 처리
+				.flatMap(response -> apiService.getInterfaceInfo(response.getInterfaceId())
+						.flatMap(interfaceInfo -> dbModuleService.dbResult(response, interfaceInfo) // DB 처리
+								.doOnNext(count -> log.info("[dbResultProcess] 업데이트 완료. 처리 건수: {}", count))))
 				.onErrorMap(error -> {
 					log.error("Error [dbResultProcess] -> {}", error.getMessage(), error); // 에러 처리
 					return new RuntimeException(error.getMessage(), error);

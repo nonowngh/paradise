@@ -36,7 +36,7 @@ public class APIService {
 	}
 
 	public Mono<String> callGateway(APIRequestMessage request, PatternType patternType, String sendSystemCode,
-			String receiveSystemCode) {
+			String receiveSystemCode, String callBackPath) {
 		return gatewayWebClient.post().uri(receiveSystemCode + patternType.getTargetContextPath()).headers(headers -> {
 			headers.setContentType(MediaType.APPLICATION_JSON);
 			headers.set(ESBAPIHeaderConstants.INTERFACE_ID, request.getInterfaceId());
@@ -44,6 +44,7 @@ public class APIService {
 			headers.set(ESBAPIHeaderConstants.SEND_SYSTEM_CODE, sendSystemCode);
 			headers.set(ESBAPIHeaderConstants.RECEIVE_SYSTEM_CODE, receiveSystemCode);
 			headers.set(ESBAPIHeaderConstants.TOTAL_COUNT, String.valueOf(request.getTotalDataCount()));
+			headers.set(ESBAPIHeaderConstants.CALL_BACK_PATH, callBackPath);
 //			headers.set("Authorization", "Bearer " + )); // 토큰이 있는 경우
 		}).bodyValue(request).retrieve()
 				.onStatus(HttpStatus::isError,

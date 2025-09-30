@@ -39,15 +39,14 @@ public class DBPollingAndSend implements BatchModule {
 					}
 					log.info("업데이트된 행 수: {}", updateCount);
 					String patternCode = interfaceInfo.getPatternCode();
+					String callBackPath = interfaceInfo.getSndSystemCode()
+							+ TargetContextPathConstants.RESULT_DB_PROCESS;
 					return dbModuleService.getSendData(interfaceInfo, transactionId)
 							.flatMap(dataItem -> apiService.callGateway(
 									APIRequestMessage.builder().interfaceId(interfaceId).transactionId(transactionId)
-											.dataItem(dataItem)
-											.callBackPath(interfaceInfo.getSndSystemCode()
-													+ TargetContextPathConstants.RESULT_DB_PROCESS)
-											.totalDataCount(updateCount).build(),
+											.dataItem(dataItem).totalDataCount(updateCount).build(),
 									PatternType.fromPatternType(patternCode), interfaceInfo.getSndSystemCode(),
-									interfaceInfo.getRcvSystemCode()));
+									interfaceInfo.getRcvSystemCode(), callBackPath));
 				})).doOnError(e -> log.error("오류 발생: {}", e.getMessage(), e)).subscribe();
 		log.info("Batch interface end '{}' -> [{}]", interfaceId, transactionId);
 	}

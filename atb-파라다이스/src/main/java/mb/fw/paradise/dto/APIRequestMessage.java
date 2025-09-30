@@ -13,9 +13,9 @@ public class APIRequestMessage {
 	
 	private DataItem dataItem;
 	
-	private String callBackPath;
-	
 	private int totalDataCount;
+	
+//	private String callBackPath;
 	
 //	private String sendSystemCode;
 //	

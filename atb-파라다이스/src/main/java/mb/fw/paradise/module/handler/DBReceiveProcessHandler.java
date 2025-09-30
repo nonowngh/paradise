@@ -5,9 +5,11 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
 import lombok.extern.slf4j.Slf4j;
+import mb.fw.paradise.constants.ESBAPIHeaderConstants;
 import mb.fw.paradise.dto.APIRequestMessage;
 import mb.fw.paradise.module.service.DBModuleService;
 import mb.fw.paradise.service.APIService;
+import mb.fw.paradise.util.HttpHeaderUtil;
 import reactor.core.publisher.Mono;
 
 @Slf4j
@@ -23,18 +25,16 @@ public class DBReceiveProcessHandler {
 	}
 
 	public Mono<ServerResponse> dbProcess(ServerRequest serverRequest) {
-		APIRequestMessage request = (APIRequestMessage) serverRequest.attributes().get("cachedBody");
-
-		if (request == null) {
-			return ServerResponse.badRequest().bodyValue("요청 body가 존재하지 않습니다.");
-		}
-		return apiService.getInterfaceInfo(request.getInterfaceId()) // 인터페이스 정보 조회
-				.flatMap(interfaceInfo -> dbModuleService.dbProcessAndResponse(interfaceInfo, request) // DB 처리
-						.doOnNext(result -> apiService.callGatewayForResult(result, request.getCallBackPath()) // 결과 호출
-						)).onErrorMap(error -> {
-							log.error("Error [dbProcess] -> {}", error.getMessage(), error); // 에러 처리
-							return new RuntimeException(error.getMessage(), error);
-						}).then(ServerResponse.ok().bodyValue("[dbProcess] 요청 수신 완료."));
+		String callBackPath = HttpHeaderUtil.getHeader(serverRequest.headers().asHttpHeaders(),
+				ESBAPIHeaderConstants.CALL_BACK_PATH);
+		return serverRequest.bodyToMono(APIRequestMessage.class)
+				.switchIfEmpty(Mono.error(new IllegalArgumentException("요청 body가 존재하지 않습니다."))) // body 없을 때 에러 처리
+				.flatMap(request -> apiService.getInterfaceInfo(request.getInterfaceId())
+						.flatMap(interfaceInfo -> dbModuleService.dbProcessAndResponse(interfaceInfo, request)
+								.doOnNext(result -> apiService.callGatewayForResult(result, callBackPath))))
+				.onErrorMap(error -> {
+					log.error("Error [dbProcess] -> {}", error.getMessage(), error); // 에러 처리
+					return new RuntimeException(error.getMessage(), error);
+				}).then(ServerResponse.ok().bodyValue("[dbProcess] 요청 수신 완료."));
 	}
-
 }
