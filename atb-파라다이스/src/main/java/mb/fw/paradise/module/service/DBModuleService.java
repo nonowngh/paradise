@@ -1,6 +1,7 @@
 package mb.fw.paradise.module.service;
 
 import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -15,9 +16,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import mb.fw.paradise.api.model.InterfaceInfo;
+import mb.fw.paradise.api.model.PatternProperty;
 import mb.fw.paradise.api.model.SqlQuery;
 import mb.fw.paradise.constants.ESBCommonFieldConstants;
 import mb.fw.paradise.constants.ESBStatusConstants;
+import mb.fw.paradise.constants.InterfaceInfoPropertyConstants;
 import mb.fw.paradise.dto.APIRequestMessage;
 import mb.fw.paradise.dto.APIResponseMessage;
 import mb.fw.paradise.dto.DataItem;
@@ -51,9 +54,12 @@ public class DBModuleService {
 
 	public Mono<Integer> dbResult(APIResponseMessage response, InterfaceInfo interfaceInfo) {
 		return Mono.fromCallable(() -> {
-			List<String> tableNameList = Arrays.stream(interfaceInfo.getSndTableNames().split(",")).map(String::trim)
-					.collect(Collectors.toList());
-			List<SqlQuery> queryList = interfaceInfo.getSqlQueryList();
+			List<PatternProperty> propertyList = new ArrayList<>(interfaceInfo.getPropertyList());
+			List<String> tableNameList = propertyList.stream()
+					.filter(property -> InterfaceInfoPropertyConstants.DB_SEND_TABLE_NAMES.equals(property.getPropertyName()))
+					.flatMap(p -> Arrays.stream(p.getPropertyValue().split(","))).map(String::trim)
+					.filter(s -> !s.isEmpty()).collect(Collectors.toList());
+			List<SqlQuery> queryList = new ArrayList<>(interfaceInfo.getSqlQueryList());
 			Map<String, Object> params = Stream
 					.of(new AbstractMap.SimpleEntry<>(ESBCommonFieldConstants.ESB_IF_ID, response.getInterfaceId()),
 							new AbstractMap.SimpleEntry<>(ESBCommonFieldConstants.ESB_TX_ID,
@@ -65,9 +71,12 @@ public class DBModuleService {
 
 	public Mono<Integer> markSendData(InterfaceInfo interfaceInfo, String transactionId) {
 		return Mono.fromCallable(() -> {
-			List<String> tableNameList = Arrays.stream(interfaceInfo.getSndTableNames().split(",")).map(String::trim)
-					.collect(Collectors.toList());
-			List<SqlQuery> queryList = interfaceInfo.getSqlQueryList();
+			List<PatternProperty> propertyList = new ArrayList<>(interfaceInfo.getPropertyList());
+			List<String> tableNameList = propertyList.stream()
+					.filter(property -> InterfaceInfoPropertyConstants.DB_SEND_TABLE_NAMES.equals(property.getPropertyName()))
+					.flatMap(p -> Arrays.stream(p.getPropertyValue().split(","))).map(String::trim)
+					.filter(s -> !s.isEmpty()).collect(Collectors.toList());
+			List<SqlQuery> queryList = new ArrayList<>(interfaceInfo.getSqlQueryList());
 			Map<String, Object> params = Stream
 					.of(new AbstractMap.SimpleEntry<>(ESBCommonFieldConstants.ESB_IF_ID,
 							interfaceInfo.getInterfaceId()),
@@ -79,9 +88,12 @@ public class DBModuleService {
 
 	public Mono<DataItem> getSendData(InterfaceInfo interfaceInfo, String transactionId) {
 		return Mono.fromCallable(() -> {
-			List<String> tableNameList = Arrays.stream(interfaceInfo.getSndTableNames().split(",")).map(String::trim)
-					.collect(Collectors.toList());
-			List<SqlQuery> queryList = interfaceInfo.getSqlQueryList();
+			List<PatternProperty> propertyList = new ArrayList<>(interfaceInfo.getPropertyList());
+			List<String> tableNameList = propertyList.stream()
+					.filter(property -> InterfaceInfoPropertyConstants.DB_SEND_TABLE_NAMES.equals(property.getPropertyName()))
+					.flatMap(p -> Arrays.stream(p.getPropertyValue().split(","))).map(String::trim)
+					.filter(s -> !s.isEmpty()).collect(Collectors.toList());
+			List<SqlQuery> queryList = new ArrayList<>(interfaceInfo.getSqlQueryList());
 			Map<String, Object> params = Stream
 					.of(new AbstractMap.SimpleEntry<>(ESBCommonFieldConstants.ESB_IF_ID,
 							interfaceInfo.getInterfaceId()),

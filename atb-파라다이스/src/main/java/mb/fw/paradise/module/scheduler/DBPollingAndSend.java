@@ -38,9 +38,9 @@ public class DBPollingAndSend implements BatchModule {
 						return Mono.empty();
 					}
 					log.info("업데이트된 행 수: {}", updateCount);
-					String patternCode = interfaceInfo.getPatternCode();
+					String patternType = interfaceInfo.getPatternType();
 					String targetPath = interfaceInfo.getRcvSystemCode()
-							+ PatternType.fromPatternType(patternCode).getTargetContextPath();
+							+ PatternType.fromPatternType(patternType).getTargetContextPath();
 					String callBackPath = interfaceInfo.getSndSystemCode()
 							+ TargetContextPathConstants.RESULT_DB_PROCESS;
 					return dbModuleService.getSendData(interfaceInfo, transactionId)

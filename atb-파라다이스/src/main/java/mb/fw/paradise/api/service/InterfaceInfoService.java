@@ -27,7 +27,7 @@ public class InterfaceInfoService {
 
 	@Cacheable(value = "interfaceInfoCache", key = "#interfaceId")
 	public Mono<InterfaceInfo> getInterfaceInfoByInterfaceId(String interfaceId) {
-		return Mono.fromCallable(() -> interfaceInfoMapper.selectInterfaceInfoByInterfaceId(interfaceId))
+		return Mono.fromCallable(() -> interfaceInfoMapper.selectInterfaceWithDetails(interfaceId))
 				.subscribeOn(jdbcScheduler);
 	}
 

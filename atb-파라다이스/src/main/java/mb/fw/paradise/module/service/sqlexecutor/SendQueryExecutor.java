@@ -8,10 +8,12 @@ import java.util.Optional;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.stereotype.Service;
 
+import lombok.extern.slf4j.Slf4j;
 import mb.fw.paradise.api.model.SqlQuery;
 import mb.fw.paradise.constants.SQLConstants;
 import mb.fw.paradise.dto.DataItem.Table;
 
+@Slf4j
 @Service
 public class SendQueryExecutor {
 
@@ -28,7 +30,8 @@ public class SendQueryExecutor {
 					.filter(q -> (SQLConstants.SQL_ID_UPDATE + "." + tableName).equals(q.getSqlId())).findFirst();
 			if (result.isPresent()) {
 				updateCount += sqlSessionTemplate.update(result.get().getQuery(), params);
-			}
+			} else
+				log.info("Nothing sql-id [{}.{}]", SQLConstants.SQL_ID_UPDATE, tableName);
 		}
 		return updateCount;
 	}
@@ -55,7 +58,8 @@ public class SendQueryExecutor {
 					.findFirst();
 			if (result.isPresent()) {
 				updateCount += sqlSessionTemplate.update(result.get().getQuery(), params);
-			}
+			} else
+				log.info("Nothing sql-id [{}.{}]", SQLConstants.SQL_ID_UPDATE_REUSLT, tableName);
 		}
 		return updateCount;
 	}

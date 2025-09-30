@@ -1,5 +1,6 @@
 package mb.fw.paradise.module.service.sqlexecutor;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -34,7 +35,7 @@ public class ReceiveQueryExecutor {
 	}
 
 	public void processInsertQueries(InterfaceInfo interfaceInfo, APIRequestMessage request) {
-		List<SqlQuery> queryList = interfaceInfo.getSqlQueryList();
+		List<SqlQuery> queryList = new ArrayList<>(interfaceInfo.getSqlQueryList());
 		Table tableData = request.getDataItem().getTable();
 		tableData.getTableItem().forEach((tableName, data) -> {
 			String expectedSqlId = SQLConstants.SQL_ID_INSERT + "." + tableName;
