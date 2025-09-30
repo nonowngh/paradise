@@ -1,29 +1,22 @@
 package mb.fw.paradise.gateway.filter;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.annotation.Order;
-import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.extern.slf4j.Slf4j;
+import mb.fw.paradise.constants.ESBAPIHeaderConstants;
 import mb.fw.paradise.constants.ESBStatusConstants;
-import mb.fw.paradise.dto.APIRequestMessage;
-import mb.fw.paradise.dto.APIResponseMessage;
 import mb.fw.paradise.service.LoggingService;
-import reactor.core.publisher.Flux;
+import mb.fw.paradise.util.HttpHeaderUtil;
 import reactor.core.publisher.Mono;
 
 @Slf4j
@@ -33,13 +26,10 @@ public class GatewayLoggingFilter implements GlobalFilter {
 
 	private final Optional<JmsTemplate> jmsTemplate;
 	private LoggingService loggingService;
-	private final ObjectMapper objectMapper;
 
-	public GatewayLoggingFilter(Optional<JmsTemplate> jmsTemplate, LoggingService loggingService,
-			ObjectMapper objectMapper) {
+	public GatewayLoggingFilter(Optional<JmsTemplate> jmsTemplate, LoggingService loggingService) {
 		this.jmsTemplate = jmsTemplate;
 		this.loggingService = loggingService;
-		this.objectMapper = objectMapper;
 	}
 
 	@Override
@@ -49,81 +39,80 @@ public class GatewayLoggingFilter implements GlobalFilter {
 				+ exchange.getRequest().getURI());
 
 		ServerHttpRequest request = exchange.getRequest();
+		HttpHeaders headers = request.getHeaders();
+		headers.forEach((key, valueList) -> {
+			String joinedValues = String.join(",", valueList);
+			log.debug("http header info -> {} : {}", key, joinedValues);
+		});
 
-		if (MediaType.APPLICATION_JSON.isCompatibleWith(request.getHeaders().getContentType())) {
-			return DataBufferUtils.join(request.getBody()).flatMap(dataBuffer -> {
-				byte[] bytes = new byte[dataBuffer.readableByteCount()];
-				dataBuffer.read(bytes);
-				DataBufferUtils.release(dataBuffer); // 중요: 메모리 해제
+		// 필요한 헤더 추출
+		String interfaceId = HttpHeaderUtil.getHeader(headers, ESBAPIHeaderConstants.INTERFACE_ID);
+		String transactionId = HttpHeaderUtil.getHeader(headers, ESBAPIHeaderConstants.TRANSACTION_ID);
+		String sendSystemCode = HttpHeaderUtil.getHeader(headers, ESBAPIHeaderConstants.SEND_SYSTEM_CODE);
+		String receiveSystemCode = HttpHeaderUtil.getHeader(headers, ESBAPIHeaderConstants.RECEIVE_SYSTEM_CODE);
+		String esbStatusCode = HttpHeaderUtil.getHeader(headers, ESBAPIHeaderConstants.ESB_STATUS_CODE);
+		String esbStatusMessage = HttpHeaderUtil.getHeader(headers, ESBAPIHeaderConstants.ESB_STATUS_MESSAGE);
+		int totalCount = HttpHeaderUtil.getIntHeader(headers, ESBAPIHeaderConstants.TOTAL_COUNT);
+		int errorCount = HttpHeaderUtil.getIntHeader(headers, ESBAPIHeaderConstants.ERROR_COUNT);
 
-				String bodyString = new String(bytes, StandardCharsets.UTF_8);
-				log.debug("Request Body: {}", bodyString);
+		// 후처리에 필요한 정보 저장
+		exchange.getAttributes().put("interfaceId", interfaceId);
+		exchange.getAttributes().put("transactionId", transactionId);
+		exchange.getAttributes().put("sendSystemCode", sendSystemCode);
+		exchange.getAttributes().put("receiveSystemCode", receiveSystemCode);
+		exchange.getAttributes().put("esbStatusCode", esbStatusCode);
+		exchange.getAttributes().put("esbStatusMessage", esbStatusMessage);
+		exchange.getAttributes().put("totalCount", totalCount);
+		exchange.getAttributes().put("errorCount", errorCount);
 
-				// 복사한 body를 새로 넣어주기 위한 래핑
-				Flux<DataBuffer> cachedBody = Flux.defer(() -> {
-					DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(bytes);
-					return Mono.just(buffer);
-				});
-				ServerHttpRequest mutatedRequest = request.mutate().build();
-				ServerHttpRequest decoratedRequest = new ServerHttpRequestDecorator(mutatedRequest) {
-					@Override
-					public Flux<DataBuffer> getBody() {
-						return cachedBody;
-					}
-				};
-				exchange.getAttributes().put("cachedRequestBody", bodyString);
-				// 체인 실행 + 응답 상태 처리
-				return chain.filter(exchange.mutate().request(decoratedRequest).build()).doFinally(signalType -> {
-					HttpStatus statusCode = exchange.getResponse().getStatusCode();
-					log.info("[GatewayFilter] Response Status Code: {}", statusCode);
+		return chain.filter(exchange).doFinally(signalType -> {
+			HttpStatus statusCode = exchange.getResponse().getStatusCode();
+			log.info("[GatewayFilter] Response Status Code: {}", statusCode);
 
-					String savedRequestBody = (String) exchange.getAttribute("cachedRequestBody");
-					if (statusCode != null && !statusCode.is2xxSuccessful()) {
-						log.warn("[gateway-logging-filter] Non-200 Response Detected: {}", statusCode);
-						String errorMessage = "요청 처리 오류 : [" + statusCode + "]" + statusCode.getReasonPhrase();
-						processByBodyType(savedRequestBody, errorMessage);
-					} else
-						processByBodyType(savedRequestBody, null);
-				});
-			});
-		}
-		return chain.filter(exchange); // JSON이 아닌 경우 그냥 pass
+			if (statusCode != null && !statusCode.is2xxSuccessful()) {
+				log.warn("[gateway-logging-filter] Non-200 Response Detected: {}", statusCode);
+				String errorMessage = "요청 처리 오류 : [" + statusCode + "] " + statusCode.getReasonPhrase();
+				processByHeaders(exchange, errorMessage);
+			} else {
+				processByHeaders(exchange, null);
+			}
+		});
+
 	}
 
-	private void processByBodyType(String savedRequestBody, String errorMessage) {
-		try {
-			APIRequestMessage requestMessage = objectMapper.readValue(savedRequestBody, APIRequestMessage.class);
-			if (requestMessage.getInterfaceId().isEmpty()) {
+	private void processByHeaders(ServerWebExchange exchange, String errorMessage) {
+		String interfaceId = (String) exchange.getAttribute("interfaceId");
+		String transactionId = (String) exchange.getAttribute("transactionId");
+		String sendSystemCode = (String) exchange.getAttribute("sendSystemCode");
+		String receiveSystemCode = (String) exchange.getAttribute("receiveSystemCode");
+		String esbStatusCode = (String) exchange.getAttribute("esbStatusCode");
+		String esbStatusMessage = (String) exchange.getAttribute("esbStatusMessage");
+		int totalCount = Integer.valueOf(exchange.getAttribute("totalCount"));
+		int errorCount = Integer.valueOf(exchange.getAttribute("errorCount"));
+
+		// 요청 메시지
+		if (esbStatusCode.isEmpty()) {
+			jmsTemplate.ifPresent(jms -> {
+				loggingService.asyncStartLogging(jms, interfaceId, transactionId, sendSystemCode, receiveSystemCode,
+						totalCount);
+			});
+			if (errorMessage != null) {
+				jmsTemplate.ifPresent(jms -> {
+					loggingService.asyncEndLogging(jms, interfaceId, transactionId, totalCount, ESBStatusConstants.FAIL,
+							errorMessage);
+				});
+			}
+			// 응답 메시지
+		} else {
+			jmsTemplate.ifPresent(jms -> {
 				if (errorMessage != null) {
-					jmsTemplate.ifPresent(jms -> {
-						loggingService.asyncEndLogging(jms,
-								APIResponseMessage.builder().interfaceId(requestMessage.getInterfaceId())
-										.transactionId(requestMessage.getTransactionId())
-										.statusCode(ESBStatusConstants.FAIL).statusMessage(errorMessage)
-										.errorDataCount(requestMessage.getSendDataCount()).build());
-					});
+					loggingService.asyncEndLogging(jms, interfaceId, transactionId, totalCount, ESBStatusConstants.FAIL,
+							errorMessage);
 				} else {
-					jmsTemplate.ifPresent(jms -> {
-						loggingService.asyncStartLogging(jms, requestMessage);
-					});
+					loggingService.asyncEndLogging(jms, interfaceId, transactionId, errorCount, esbStatusCode,
+							esbStatusMessage);
 				}
-			}
-		} catch (Exception e) {
-			try {
-				APIResponseMessage responseMessage = objectMapper.readValue(savedRequestBody, APIResponseMessage.class);
-				if (responseMessage.getInterfaceId().isEmpty()) {
-					if (errorMessage != null) {
-						responseMessage.setStatusCode(ESBStatusConstants.FAIL);
-						responseMessage.setStatusMessage(errorMessage);
-						responseMessage.setErrorDataCount(1);
-					}
-					jmsTemplate.ifPresent(jms -> {
-						loggingService.asyncEndLogging(jms, responseMessage);
-					});
-				}
-			} catch (Exception e1) {
-				log.error("Body type error(can't not convert json body -> pojo) body : {}", savedRequestBody);
-			}
+			});
 		}
 	}
 }

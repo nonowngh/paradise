@@ -4,11 +4,13 @@ import java.util.NoSuchElementException;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import lombok.extern.slf4j.Slf4j;
 import mb.fw.paradise.api.model.InterfaceInfo;
+import mb.fw.paradise.constants.ESBAPIHeaderConstants;
 import mb.fw.paradise.constants.PatternType;
 import mb.fw.paradise.dto.APIRequestMessage;
 import mb.fw.paradise.dto.APIResponseMessage;
@@ -33,9 +35,17 @@ public class APIService {
 						Mono.error(new NoSuchElementException("InterfaceInfo not found for id : " + interfaceId)));
 	}
 
-	public Mono<String> callGateway(APIRequestMessage request, PatternType patternType) {
-		return gatewayWebClient.post().uri(request.getReceiveSystemCode() + patternType.getTargetContextPath())
-				.bodyValue(request).retrieve()
+	public Mono<String> callGateway(APIRequestMessage request, PatternType patternType, String sendSystemCode,
+			String receiveSystemCode) {
+		return gatewayWebClient.post().uri(receiveSystemCode + patternType.getTargetContextPath()).headers(headers -> {
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			headers.set(ESBAPIHeaderConstants.INTERFACE_ID, request.getInterfaceId());
+			headers.set(ESBAPIHeaderConstants.TRANSACTION_ID, request.getTransactionId());
+			headers.set(ESBAPIHeaderConstants.SEND_SYSTEM_CODE, sendSystemCode);
+			headers.set(ESBAPIHeaderConstants.RECEIVE_SYSTEM_CODE, receiveSystemCode);
+			headers.set(ESBAPIHeaderConstants.TOTAL_COUNT, String.valueOf(request.getTotalDataCount()));
+//			headers.set("Authorization", "Bearer " + )); // 토큰이 있는 경우
+		}).bodyValue(request).retrieve()
 				.onStatus(HttpStatus::isError,
 						clientResponse -> clientResponse.bodyToMono(String.class).flatMap(
 								errorBody -> Mono.error(new RuntimeException("데이터 전송 중 오류 발생 : " + errorBody))))
@@ -45,14 +55,20 @@ public class APIService {
 	}
 
 	public Mono<String> callGatewayForResult(APIResponseMessage response, String callbackPath) {
-		return gatewayWebClient.post().uri(callbackPath).bodyValue(response).retrieve().bodyToMono(String.class)
-				.doOnError(error -> {
-					// 오류 처리 (예: 로그 기록)
-					log.error("결과 전송 중 오류 발생 : " + error.getMessage());
-				}).doOnTerminate(() -> {
-					// 요청이 종료된 후 실행할 작업 (예: 로깅, 트래킹 등)
-					log.info("결과 전송 완료");
-				});
+		return gatewayWebClient.post().uri(callbackPath).headers(headers -> {
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			headers.set(ESBAPIHeaderConstants.INTERFACE_ID, response.getInterfaceId());
+			headers.set(ESBAPIHeaderConstants.TRANSACTION_ID, response.getTransactionId());
+			headers.set(ESBAPIHeaderConstants.ESB_STATUS_CODE, response.getStatusCode());
+			headers.set(ESBAPIHeaderConstants.ESB_STATUS_MESSAGE, response.getStatusMessage());
+			headers.set(ESBAPIHeaderConstants.TOTAL_COUNT, String.valueOf(response.getTotalDataCount()));
+			headers.set(ESBAPIHeaderConstants.ERROR_COUNT, String.valueOf(response.getErrorDataCount()));
+//			headers.set("Authorization", "Bearer " + )); // 토큰이 있는 경우
+		}).bodyValue(response).retrieve().bodyToMono(String.class).doOnError(error -> {
+			log.error("결과 전송 중 오류 발생 : " + error.getMessage());
+		}).doOnTerminate(() -> {
+			log.info("결과 전송 완료");
+		});
 	}
 
 }

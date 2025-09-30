@@ -15,11 +15,11 @@ public class APIRequestMessage {
 	
 	private String callBackPath;
 	
-	private int sendDataCount;
+	private int totalDataCount;
 	
-	private String sendSystemCode;
-	
-	private String receiveSystemCode;
+//	private String sendSystemCode;
+//	
+//	private String receiveSystemCode;
 	
 }
 

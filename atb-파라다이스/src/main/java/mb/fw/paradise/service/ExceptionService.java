@@ -23,6 +23,7 @@ public class ExceptionService {
 
 		apiService.callGatewayForResult(APIResponseMessage.builder().interfaceId(request.getInterfaceId())
 				.transactionId(request.getTransactionId()).statusCode(ESBStatusConstants.FAIL)
-				.statusMessage(e.getMessage()).build(), request.getCallBackPath());
+				.statusMessage(e.getMessage()).totalDataCount(request.getTotalDataCount())
+				.errorDataCount(request.getTotalDataCount()).build(), request.getCallBackPath());
 	}
 }

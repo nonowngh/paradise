@@ -45,9 +45,9 @@ public class DBPollingAndSend implements BatchModule {
 											.dataItem(dataItem)
 											.callBackPath(interfaceInfo.getSndSystemCode()
 													+ TargetContextPathConstants.RESULT_DB_PROCESS)
-											.sendDataCount(updateCount).sendSystemCode(interfaceInfo.getSndSystemCode())
-											.receiveSystemCode(interfaceInfo.getRcvSystemCode()).build(),
-									PatternType.fromPatternType(patternCode)));
+											.totalDataCount(updateCount).build(),
+									PatternType.fromPatternType(patternCode), interfaceInfo.getSndSystemCode(),
+									interfaceInfo.getRcvSystemCode()));
 				})).doOnError(e -> log.error("오류 발생: {}", e.getMessage(), e)).subscribe();
 		log.info("Batch interface end '{}' -> [{}]", interfaceId, transactionId);
 	}
