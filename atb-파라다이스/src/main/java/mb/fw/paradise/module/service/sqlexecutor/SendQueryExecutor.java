@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.mybatis.spring.SqlSessionTemplate;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import lombok.extern.slf4j.Slf4j;
@@ -17,10 +18,11 @@ import mb.fw.paradise.dto.DataItem.Table;
 @Service
 public class SendQueryExecutor {
 
-	private final SqlSessionTemplate sqlSessionTemplate;
+	@Qualifier("simpleSqlSessionTemplate")
+	private final SqlSessionTemplate simpleSqlSessionTemplate;
 
-	public SendQueryExecutor(SqlSessionTemplate sqlSessionTemplate) {
-		this.sqlSessionTemplate = sqlSessionTemplate;
+	public SendQueryExecutor(SqlSessionTemplate simpleSqlSessionTemplate) {
+		this.simpleSqlSessionTemplate = simpleSqlSessionTemplate;
 	}
 
 	public int update(List<String> tableNameList, List<SqlQuery> queryList, Map<String, Object> params) {
@@ -29,7 +31,7 @@ public class SendQueryExecutor {
 			Optional<SqlQuery> result = queryList.stream()
 					.filter(q -> (SQLConstants.SQL_ID_UPDATE + "." + tableName).equals(q.getSqlId())).findFirst();
 			if (result.isPresent()) {
-				updateCount += sqlSessionTemplate.update(result.get().getQuery(), params);
+				updateCount += simpleSqlSessionTemplate.update(result.get().getQuery(), params);
 			} else
 				log.info("Nothing sql-id [{}.{}]", SQLConstants.SQL_ID_UPDATE, tableName);
 		}
@@ -49,7 +51,7 @@ public class SendQueryExecutor {
 					.filter(q -> (SQLConstants.SQL_ID_SELECT + "." + tableName).equals(q.getSqlId())).findFirst();
 			if (result.isPresent()) {
 				tableItem.put(recvTableNameList.get(index),
-						sqlSessionTemplate.selectList(result.get().getQuery(), params));
+						simpleSqlSessionTemplate.selectList(result.get().getQuery(), params));
 			}
 		}
 		return Table.builder().tableItem(tableItem).build();
@@ -63,7 +65,7 @@ public class SendQueryExecutor {
 					.filter(q -> (SQLConstants.SQL_ID_UPDATE_REUSLT + "." + tableName).equals(q.getSqlId()))
 					.findFirst();
 			if (result.isPresent()) {
-				updateCount += sqlSessionTemplate.update(result.get().getQuery(), params);
+				updateCount += simpleSqlSessionTemplate.update(result.get().getQuery(), params);
 			} else
 				log.info("Nothing sql-id [{}.{}]", SQLConstants.SQL_ID_UPDATE_REUSLT, tableName);
 		}

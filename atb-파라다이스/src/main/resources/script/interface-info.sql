@@ -61,6 +61,42 @@ CREATE TABLE TB_INTERFACE_QUERY (
         ON DELETE CASCADE
 );
 
+INSERT INTO interface.tb_interface_info
+(interface_id, cron_expression, pattern_type, send_system_code, recv_system_code, mapping_yn, use_yn, created_at, updated_at, created_by, updated_by)
+VALUES('IF_UAS_CB_TRS_002', '0 8 7,17 * * ?', 'D2D', 'EAS', 'PCB', 'N', 'Y', '2025-10-01 00:15:38.889', '2025-10-01 00:15:38.889', NULL, NULL);
+
+INSERT INTO interface.tb_interface_detail
+(interface_id, property_name, property_value, created_at, updated_at, created_by, updated_by)
+VALUES('IF_UAS_CB_TRS_002', 'DB_SEND_TABLE_NAMES', 'VIEW_CARD_CASINO', '2025-10-01 00:21:26.431', '2025-10-01 00:21:26.431', NULL, NULL);
+INSERT INTO interface.tb_interface_detail
+(interface_id, property_name, property_value, created_at, updated_at, created_by, updated_by)
+VALUES('IF_UAS_CB_TRS_002', 'DB_RECV_TABLE_NAMES', 'EAIT_CARD_CASINO', '2025-10-01 00:35:14.853', '2025-10-01 00:35:14.853', NULL, NULL);
+INSERT INTO interface.tb_interface_detail
+(interface_id, property_name, property_value, created_at, updated_at, created_by, updated_by)
+VALUES('IF_UAS_CB_TRS_002', 'DB_WORK_TYPE', 'DI', '2025-10-01 00:21:26.431', '2025-10-01 00:21:26.431', NULL, NULL);
+
+INSERT INTO interface.tb_interface_query
+(interface_id, sql_id, query, created_at, updated_at, created_by, updated_by)
+VALUES('IF_UAS_CB_TRS_002', 'SELECT.VIEW_CARD_CASINO', 'SELECT * FROM VIEW_CARD_CASINO WHERE BUSINESS_AREA_CODE= ''B110'' OR BUSINESS_AREA_CODE= ''B212''', '2025-10-01 00:27:44.588', '2025-10-01 00:27:44.588', NULL, NULL);
+INSERT INTO interface.tb_interface_query
+(interface_id, sql_id, query, created_at, updated_at, created_by, updated_by)
+VALUES('IF_UAS_CB_TRS_002', 'DELETE.EAIT_CARD_CASINO', 'DELETE EAIT_CARD_CASINO', '2025-10-01 00:27:44.588', '2025-10-01 00:27:44.588', NULL, NULL);
+INSERT INTO interface.tb_interface_query
+(interface_id, sql_id, query, created_at, updated_at, created_by, updated_by)
+VALUES('IF_UAS_CB_TRS_002', 'INSERT.EAIT_CARD_CASINO', 'INSERT INTO EAIT_CARD_CASINO (
+            CARD_NO,            
+            BUSINESS_AREA_CODE,
+            CARD_VENDOR_CODE,
+            ORIGINAL_EMP_NO,
+            EMP_NO
+        )VALUES (
+            #{CARD_NO},
+            #{BUSINESS_AREA_CODE},
+            #{CARD_VENDOR_CODE},
+            #{ORIGINAL_EMP_NO},
+            #{EMP_NO}
+        )
+', '2025-10-01 00:27:44.588', '2025-10-01 00:27:44.588', NULL, NULL);
 
 SELECT 
     info.interface_id,

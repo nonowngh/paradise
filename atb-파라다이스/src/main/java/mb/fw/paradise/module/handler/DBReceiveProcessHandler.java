@@ -1,5 +1,8 @@
 package mb.fw.paradise.module.handler;
 
+import javax.sql.DataSource;
+
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -14,6 +17,7 @@ import reactor.core.publisher.Mono;
 
 @Slf4j
 @Component
+@ConditionalOnBean(DataSource.class)
 public class DBReceiveProcessHandler {
 
 	private final DBModuleService dbModuleService;

@@ -11,24 +11,20 @@ import lombok.extern.slf4j.Slf4j;
 import mb.fw.paradise.api.mapper.InterfaceInfoMapper;
 import mb.fw.paradise.api.model.InterfaceInfo;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Scheduler;
-import reactor.core.scheduler.Schedulers;
 
-@Profile("api")
+@Profile("interface-info-api")
 @Slf4j
 @Service
 public class InterfaceInfoService {
 	private final InterfaceInfoMapper interfaceInfoMapper;
-	private final Scheduler jdbcScheduler = Schedulers.boundedElastic(); // Blocking I/O용
 
 	public InterfaceInfoService(InterfaceInfoMapper interfaceInfoMapper) {
 		this.interfaceInfoMapper = interfaceInfoMapper;
 	}
 
-	@Cacheable(value = "interfaceInfoCache", key = "#interfaceId")
-	public Mono<InterfaceInfo> getInterfaceInfoByInterfaceId(String interfaceId) {
-		return Mono.fromCallable(() -> interfaceInfoMapper.selectInterfaceWithDetails(interfaceId))
-				.subscribeOn(jdbcScheduler);
+	@Cacheable(value = "interfaceInfoCache", key = "#id")
+	public InterfaceInfo getInterfaceInfoByInterfaceId(String id) {
+	    return interfaceInfoMapper.selectInterfaceWithDetails(id);
 	}
 
 	@CacheEvict(value = "interfaceInfoCache", allEntries = true)
@@ -37,6 +33,6 @@ public class InterfaceInfoService {
 	}
 	
 	public Mono<List<InterfaceInfo>> getScheduleList(List<String> interfaceIdList) {
-        return Mono.just(interfaceInfoMapper.selectInterfaceCronExpressionListByInterfaceIdList(interfaceIdList));
+        return Mono.just(interfaceInfoMapper.selectInterfaceCronExpressionList(interfaceIdList));
     }
 }

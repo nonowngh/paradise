@@ -17,7 +17,7 @@ import mb.fw.paradise.constants.APIContextPathConstants;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-@Profile("api")
+@Profile("interface-info-api")
 @RestController
 @RequestMapping(APIContextPathConstants.INTERFACE_INFO_API)
 public class InterfaceInfoController {
@@ -30,8 +30,12 @@ public class InterfaceInfoController {
 
 	@GetMapping("/{interfaceId}")
 	public Mono<ResponseEntity<InterfaceInfo>> getInterfaceInfo(@PathVariable String interfaceId) {
-		return interfaceInfoService.getInterfaceInfoByInterfaceId(interfaceId).map(ResponseEntity::ok)
-				.defaultIfEmpty(ResponseEntity.notFound().build());
+	    return Mono.fromSupplier(() -> {
+	        InterfaceInfo info = interfaceInfoService.getInterfaceInfoByInterfaceId(interfaceId);
+	        return (info != null)
+	            ? ResponseEntity.ok(info)
+	            : ResponseEntity.notFound().build();
+	    });
 	}
 
 	@GetMapping(APIContextPathConstants.INTERFACE_INFO_API_CLEAR_CACHE)

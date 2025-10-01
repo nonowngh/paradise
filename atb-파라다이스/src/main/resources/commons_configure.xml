@@ -4,17 +4,17 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
     <bean class="org.apache.commons.dbcp.BasicDataSource" id="dataSource">
         <description><![CDATA[$dbcp.description]]></description>
-        <property name="url" value="jdbc:oracle:thin:@172.28.7.133:41521/xe"/>
-        <property name="driverClassName" value="oracle.jdbc.driver.OracleDriver"/>
-        <property name="username" value="tester"/>
-        <property name="password" value="tester"/>
+        <property name="url" value="jdbc:postgresql://localhost:5432/indigodb"/>
+        <property name="driverClassName" value="org.postgresql.Driver"/>
+        <property name="username" value="indigo_interface"/>
+        <property name="password" value="meta1234"/>
         <property name="defaultAutoCommit" value="false"/>
         <property name="maxWait" value="0"/>
         <property name="initialSize" value="8"/>
         <property name="maxActive" value="8"/>
         <property name="minIdle" value="0"/>
         <property name="maxIdle" value="8"/>
-        <property name="validationQuery" value="SELECT 1 FROM DUAL"/>
+        <property name="validationQuery" value="SELECT 1"/>
         <property name="testOnBorrow" value="true"/>
         <property name="testOnReturn" value="true"/>
         <property name="testWhileIdle" value="true"/>
@@ -23,7 +23,7 @@
         <property name="numTestsPerEvictionRun" value="3"/>
     </bean>
 
-    <bean class="com.indigo.indigomq.pool.PooledConnectionFactory"
+<!--    <bean class="com.indigo.indigomq.pool.PooledConnectionFactory"
           destroy-method="stop" id="jmsConnectionFactory">
         <description/>
         <property name="connectionFactory">
@@ -36,5 +36,5 @@
         <property name="maxConnections" value="10"/>
         <property name="idleTimeout" value="30000"/>
         <property name="maximumActive" value="500"/>
-    </bean>
+    </bean>-->
 </beans>

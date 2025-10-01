@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
 
 import mb.fw.paradise.api.model.InterfaceInfo;
 
@@ -13,6 +12,5 @@ public interface InterfaceInfoMapper {
 
     InterfaceInfo selectInterfaceWithDetails(@Param("interfaceId") String interfaceId);
 	
-	@Select("SELECT interfaceId, cron-expression FROM interface-info WHERE interfaceId IN (#{interfaceIdList})")
-	List<InterfaceInfo> selectInterfaceCronExpressionListByInterfaceIdList(List<String> interfaceIdList);
+	List<InterfaceInfo> selectInterfaceCronExpressionList(List<String> interfaceIdList);
 }

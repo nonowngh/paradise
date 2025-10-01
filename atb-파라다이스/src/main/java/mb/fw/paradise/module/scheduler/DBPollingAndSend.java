@@ -1,5 +1,6 @@
 package mb.fw.paradise.module.scheduler;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +15,8 @@ import mb.fw.paradise.util.TransactionGenerator;
 import reactor.core.publisher.Mono;
 
 @Slf4j
-@Component("DBPollingAndSend")
+@Component("dbPollingAndSend")
+@Profile("scheduler")
 public class DBPollingAndSend implements BatchModule {
 
 	private final APIService apiService;

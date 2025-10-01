@@ -34,7 +34,7 @@ public class ReceiveQueryExecutor {
 		this.config = config;
 	}
 
-	public void processDeleteQueries(InterfaceInfo interfaceInfo, APIRequestMessage request) {
+	public void processDelete(InterfaceInfo interfaceInfo, APIRequestMessage request) {
 		List<SqlQuery> queryList = new ArrayList<>(interfaceInfo.getSqlQueryList());
 		Table tableData = request.getDataItem().getTable();
 		tableData.getTableItem().forEach((tableName, data) -> {
@@ -45,7 +45,7 @@ public class ReceiveQueryExecutor {
 		});
 	}
 
-	public void processInsertQueries(InterfaceInfo interfaceInfo, APIRequestMessage request) {
+	public void processInsert(InterfaceInfo interfaceInfo, APIRequestMessage request) {
 		List<SqlQuery> queryList = new ArrayList<>(interfaceInfo.getSqlQueryList());
 		Table tableData = request.getDataItem().getTable();
 		tableData.getTableItem().forEach((tableName, data) -> {

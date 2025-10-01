@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 import mb.fw.paradise.api.model.InterfaceInfo;
 import mb.fw.paradise.constants.APIContextPathConstants;
 
-@Profile("local")
+@Profile("scheduler")
 @Component
 @RequiredArgsConstructor
 public class MockServer {
@@ -31,7 +31,7 @@ public class MockServer {
 		mockServer = ClientAndServer.startClientAndServer(8090);
 		List<InterfaceInfo> infoList = new ArrayList<>();
 		InterfaceInfo info = new InterfaceInfo();
-		info.setInterfaceId("IF_TEST_01");
+		info.setInterfaceId("IF_UAS_CB_TRS_002");
 		info.setCronExpression("0/10 * * * * ?");
 		infoList.add(info);
 		mockServer.when(HttpRequest.request().withMethod("POST").withPath(APIContextPathConstants.INTERFACE_INFO_API + APIContextPathConstants.INTERFACE_INFO_API_SCHEDULE_LIST))

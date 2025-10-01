@@ -29,5 +29,5 @@
         <property name="explicitQosEnabled" value="true"/>
         <property name="sessionTransacted" value="false"/>
     </bean>-->
-    <!--<import resource="classpath:commons_configure.xml"/>-->
+    <import resource="classpath:commons_configure.xml"/>
 </beans>

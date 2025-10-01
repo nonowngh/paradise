@@ -7,10 +7,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.sql.DataSource;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +27,6 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 @Service
-@ConditionalOnBean(DataSource.class)
 public class DBModuleService {
 
 	@Autowired
@@ -48,10 +44,10 @@ public class DBModuleService {
 			for (char ch : workType.toCharArray()) {
 				switch (ch) {
 				case 'D':
-					receiveQueryExecutor.processDeleteQueries(interfaceInfo, request);
+					receiveQueryExecutor.processDelete(interfaceInfo, request);
 					break;
 				case 'I':
-					receiveQueryExecutor.processInsertQueries(interfaceInfo, request);
+					receiveQueryExecutor.processInsert(interfaceInfo, request);
 					break;
 //				case 'U':
 //					receiveQueryExecutor.processUpdateQueries(interfaceInfo, request);
@@ -60,7 +56,7 @@ public class DBModuleService {
 //					receiveQueryExecutor.processProcedureQueries(interfaceInfo, request);
 //					break;
 				default:
-					throw new IllegalArgumentException("지원하지 않는 작업 유형: " + ch);
+					throw new IllegalArgumentException("Invalid 'workType' : " + ch);
 				}
 			}
 			return APIResponseMessage.builder().statusCode(ESBStatusConstants.SUCCESS)

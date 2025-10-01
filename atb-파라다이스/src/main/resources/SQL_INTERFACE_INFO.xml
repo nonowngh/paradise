@@ -3,7 +3,7 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.example.mapper.InterfaceInfoMapper">
+<mapper namespace="mb.fw.paradise.api.mapper.InterfaceInfoMapper">
 
     <!-- 컬렉션 resultMap -->
     <resultMap id="InterfaceInfoMap" type="mb.fw.paradise.api.model.InterfaceInfo">
@@ -44,6 +44,15 @@
         LEFT JOIN interface.tb_interface_query q
             ON i.interface_id = q.interface_id
         WHERE i.interface_id = #{interfaceId} AND i.use_yn = 'Y'
+    </select>
+    
+    <select id="selectInterfaceCronExpressionList" parameterType="map" resultType="InterfaceInfo">
+      SELECT interface_id, cron_expression 
+      FROM interface.tb_interface_info 
+      WHERE interface_id IN
+      <foreach collection="interfaceIdList" item="id" open="(" separator="," close=")">
+        #{id}
+      </foreach>
     </select>
 
 </mapper>

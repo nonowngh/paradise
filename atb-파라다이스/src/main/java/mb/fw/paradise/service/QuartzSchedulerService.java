@@ -11,8 +11,8 @@ import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
@@ -21,15 +21,12 @@ import org.springframework.web.reactive.function.client.WebClient;
 import lombok.extern.slf4j.Slf4j;
 import mb.fw.paradise.api.model.InterfaceInfo;
 import mb.fw.paradise.config.RegisterModuleConfig;
-import mb.fw.paradise.config.prop.RegisterProp;
 import mb.fw.paradise.constants.APIContextPathConstants;
 import mb.fw.paradise.service.job.DynamicQuartzJob;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
+@Profile("scheduler")
 @Slf4j
 @Service
-@ConditionalOnBean(RegisterProp.class)
 public class QuartzSchedulerService {
 
 	private Scheduler scheduler;
@@ -45,17 +42,25 @@ public class QuartzSchedulerService {
 
 	@EventListener(ApplicationReadyEvent.class)
 	public void scheduleJobsFromAPI() {
-		Mono<List<InterfaceInfo>> cronScheduleInfoList = interfaceInfoWebClient.post()
-				.uri(APIContextPathConstants.INTERFACE_INFO_API_SCHEDULE_LIST)
-				.bodyValue(config.getRegisterProp().getInterfaceList()).retrieve()
-				.bodyToMono(new ParameterizedTypeReference<List<InterfaceInfo>>() {
-				});
+		try {
 
-		String taskName = config.getRegisterProp().getBatchTask();
-		cronScheduleInfoList.flatMapMany(Flux::fromIterable).doOnNext(info -> {
-			log.info("Register cron schedule info [{}] -> {}", info.getInterfaceId(), info.getCronExpression());
-			scheduleJob(taskName, info.getInterfaceId(), info.getCronExpression());
-		}).subscribe();
+			List<InterfaceInfo> cronScheduleInfoList = interfaceInfoWebClient.post()
+					.uri(APIContextPathConstants.INTERFACE_INFO_API_SCHEDULE_LIST)
+					.bodyValue(config.getRegisterProp().getInterfaceList()).retrieve()
+					.bodyToMono(new ParameterizedTypeReference<List<InterfaceInfo>>() {
+					}).block(); // ← 동기 호출;
+
+			String taskName = config.getRegisterProp().getBatchTask();
+			if (cronScheduleInfoList != null) {
+				for (InterfaceInfo info : cronScheduleInfoList) {
+					log.info("Register cron schedule info [{}] -> {}", info.getInterfaceId(), info.getCronExpression());
+					scheduleJob(taskName, info.getInterfaceId(), info.getCronExpression());
+				}
+			}
+		} catch (Exception e) {
+			log.error("🔥 스케줄 초기화 중 오류 발생 -> {}", e.getMessage());
+			throw new RuntimeException("스케줄 초기화 실패", e);
+		}
 	}
 
 	private void scheduleJob(String taskName, String interfaceId, String cronExpression) {
