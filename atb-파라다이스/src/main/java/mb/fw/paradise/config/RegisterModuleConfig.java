@@ -24,10 +24,10 @@ public class RegisterModuleConfig {
 	public void init() {
 		if(moduleProp == null) return;
 		String batchTask = moduleProp.getBatchTask();
-		if (!batchTask.isEmpty())
+		if (batchTask != null && !batchTask.isEmpty())
 			log.info("Setting property batch-task : {}", batchTask);
 		List<String> interfaceList = moduleProp.getInterfaceList();
-		if (!interfaceList.isEmpty())
+		if (interfaceList != null && !interfaceList.isEmpty())
 			log.info("Setting property interface-list : {}", interfaceList);
 		String mySystemCode = moduleProp.getSystemCode();
 		if (!mySystemCode.isEmpty()) {

@@ -15,6 +15,9 @@ adaptor:
       - IF_UAS_CB_TRS_002
 
 spring:
+  quartz:
+    properties:
+      org.quartz.threadPool.threadCount: 3  
   main:
     web-application-type: reactive
     allow-bean-definition-overriding: true

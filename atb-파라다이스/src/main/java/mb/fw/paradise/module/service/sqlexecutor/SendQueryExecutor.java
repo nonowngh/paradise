@@ -36,13 +36,13 @@ public class SendQueryExecutor {
 			if (result.isPresent()) {
 				updateCount += simpleSqlSessionTemplate.update(result.get().getQuery(), params);
 			} else
-				log.info("Nothing sql-id [{}.{}]", SQLConstants.SQL_ID_UPDATE, tableName);
+				log.warn("Nothing sql-id [{}.{}] skip update.", SQLConstants.SQL_ID_UPDATE, tableName);
 		}
 		return updateCount;
 	}
 
 	public Table getTableData(List<String> sendTableNameList, List<String> recvTableNameList, List<SqlQuery> queryList,
-			Map<String, Object> params) {
+			Map<String, Object> params) throws Exception {
 		// 데이터 조회
 		LinkedHashMap<String, List<Map<String, Object>>> tableItem = new LinkedHashMap<>();
 		for (String tableName : sendTableNameList) {
@@ -55,6 +55,8 @@ public class SendQueryExecutor {
 			if (result.isPresent()) {
 				tableItem.put(recvTableNameList.get(index),
 						simpleSqlSessionTemplate.selectList(result.get().getQuery(), params));
+			} else {
+				throw new Exception("Nothing sql-id [" + SQLConstants.SQL_ID_SELECT + "." + tableName + "]");
 			}
 		}
 		return Table.builder().tableItem(tableItem).build();

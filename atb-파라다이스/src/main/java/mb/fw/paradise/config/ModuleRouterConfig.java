@@ -1,6 +1,5 @@
 package mb.fw.paradise.config;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
@@ -10,8 +9,9 @@ import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
 import lombok.extern.slf4j.Slf4j;
-import mb.fw.paradise.config.prop.ModuleProp;
+import mb.fw.paradise.config.annotaion.ConditionalOnAdaptorType;
 import mb.fw.paradise.constants.AdaptorConstants;
+import mb.fw.paradise.constants.AdaptorType;
 import mb.fw.paradise.constants.TargetContextPathConstants;
 import mb.fw.paradise.module.handler.DBReceiveProcessHandler;
 import mb.fw.paradise.module.handler.DBResultProcessHandler;
@@ -20,7 +20,7 @@ import mb.fw.paradise.service.ExceptionService;
 
 @Slf4j
 @Configuration
-@ConditionalOnBean(ModuleProp.class)
+@ConditionalOnAdaptorType(value = { AdaptorType.INTERFACE_API, AdaptorType.GATEWAY }, negate = true)
 public class ModuleRouterConfig {
 
 	private final ExceptionService exceptionService;

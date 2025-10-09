@@ -14,5 +14,6 @@ import mb.fw.paradise.constants.AdaptorType;
 @Retention(RetentionPolicy.RUNTIME)
 @Conditional(OnAdaptorTypeCondition.class)
 public @interface ConditionalOnAdaptorType {
-	AdaptorType value();
+	AdaptorType[] value();
+	boolean negate() default false;
 }

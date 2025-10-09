@@ -1,5 +1,6 @@
 package mb.fw.paradise.config.condition;
 
+import java.util.Arrays;
 import java.util.Map;
 
 import org.springframework.context.annotation.Condition;
@@ -13,15 +14,18 @@ public class OnAdaptorTypeCondition implements Condition {
 
 	@Override
 	public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
-		String configuredType = context.getEnvironment().getProperty("adaptor.type");
+		Map<String, Object> attrs = metadata.getAnnotationAttributes(ConditionalOnAdaptorType.class.getName());
+		if (attrs == null)
+			return false;
 
-		if (metadata.isAnnotated(ConditionalOnAdaptorType.class.getName())) {
-			Map<String, Object> attrs = metadata.getAnnotationAttributes(ConditionalOnAdaptorType.class.getName());
-			AdaptorType requiredType = (AdaptorType) attrs.get("value");
+		AdaptorType[] expectedTypes = (AdaptorType[]) attrs.get("value");
+		boolean negate = (boolean) attrs.getOrDefault("negate", false);
+		String actualType = context.getEnvironment().getProperty("adaptor.type");
 
-			return requiredType.name().equalsIgnoreCase(configuredType);
-		}
-		return false;
+		boolean matched = Arrays.stream(expectedTypes)
+				.anyMatch(expected -> expected.name().equalsIgnoreCase(actualType));
+
+		return negate ? !matched : matched;
 	}
 
 }

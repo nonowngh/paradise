@@ -36,10 +36,10 @@ public class DBPollingAndSend implements BatchModule {
 
 		apiService.getInterfaceInfo(interfaceId).flatMap(
 				interfaceInfo -> dbModuleService.markSendData(interfaceInfo, transactionId).flatMap(updateCount -> {
-					if (updateCount <= 0) {
-						log.info("조회 데이터 없음");
-						return Mono.empty();
-					}
+//					if (updateCount <= 0) {
+//						log.info("조회 데이터 없음");
+//						return Mono.empty();
+//					}
 					log.info("업데이트된 행 수: {}", updateCount);
 					String patternType = interfaceInfo.getPatternType();
 					String targetPath = interfaceInfo.getRcvSystemCode()
@@ -52,9 +52,10 @@ public class DBPollingAndSend implements BatchModule {
 											.dataItem(dataItem).totalDataCount(updateCount).build(),
 									targetPath, interfaceInfo.getSndSystemCode(), interfaceInfo.getRcvSystemCode(),
 									callBackPath));
-				})).doOnError(e -> log.error("오류 발생: {}", e.getMessage(), e))
+				})).switchIfEmpty(Mono.fromRunnable(() -> log.info("조회 데이터 없음")))
+//				.doOnError(e -> log.error("오류 발생: {}", e.getMessage(), e))
 				.doFinally(signalType -> log.info("Batch interface end '{}' -> [{}]", interfaceId, transactionId))
-				.subscribe();
+				.subscribe(result -> {}, error -> log.error("오류 발생: {}", error.getMessage(), error));
 //		log.info("Batch interface end '{}' -> [{}]", interfaceId, transactionId);
 	}
 }

@@ -1,5 +1,5 @@
 server:
-  port: 29002
+  port: 29001
 
 web:
   client:
@@ -10,6 +10,9 @@ adaptor:
   type: DB
   module-prop:
     system-code: EAS
+    batch-task: dbPollingAndSend
+    interface-list:
+      - IF_UAS_CB_TRS_002
 
 spring:
   main:
@@ -18,6 +21,6 @@ spring:
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration
-      - org.springframework.boot.autoconfigure.quartz.QuartzAutoConfiguration
-#     - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+#      - org.springframework.boot.autoconfigure.quartz.QuartzAutoConfiguration
+#      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
       
