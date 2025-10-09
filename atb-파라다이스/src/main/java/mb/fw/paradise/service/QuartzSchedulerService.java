@@ -10,9 +10,9 @@ import org.quartz.SchedulerException;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
@@ -24,7 +24,6 @@ import mb.fw.paradise.config.RegisterModuleConfig;
 import mb.fw.paradise.constants.APIContextPathConstants;
 import mb.fw.paradise.service.job.DynamicQuartzJob;
 
-@Profile("scheduler")
 @Slf4j
 @Service
 public class QuartzSchedulerService {
@@ -33,7 +32,7 @@ public class QuartzSchedulerService {
 	private WebClient interfaceInfoWebClient;
 	private final RegisterModuleConfig config;
 
-	public QuartzSchedulerService(Scheduler scheduler,
+	public QuartzSchedulerService(@Autowired(required = false) Scheduler scheduler,
 			@Qualifier("interfaceInfoWebClient") WebClient interfaceInfoWebClient, RegisterModuleConfig config) {
 		this.scheduler = scheduler;
 		this.interfaceInfoWebClient = interfaceInfoWebClient;
@@ -42,15 +41,16 @@ public class QuartzSchedulerService {
 
 	@EventListener(ApplicationReadyEvent.class)
 	public void scheduleJobsFromAPI() {
+		if (scheduler == null)
+			return;
 		try {
-
 			List<InterfaceInfo> cronScheduleInfoList = interfaceInfoWebClient.post()
 					.uri(APIContextPathConstants.INTERFACE_INFO_API_SCHEDULE_LIST)
-					.bodyValue(config.getRegisterProp().getInterfaceList()).retrieve()
+					.bodyValue(config.getModuleProp().getInterfaceList()).retrieve()
 					.bodyToMono(new ParameterizedTypeReference<List<InterfaceInfo>>() {
 					}).block(); // ← 동기 호출;
 
-			String taskName = config.getRegisterProp().getBatchTask();
+			String taskName = config.getModuleProp().getBatchTask();
 			if (cronScheduleInfoList != null) {
 				for (InterfaceInfo info : cronScheduleInfoList) {
 					log.info("Register cron schedule info [{}] -> {}", info.getInterfaceId(), info.getCronExpression());

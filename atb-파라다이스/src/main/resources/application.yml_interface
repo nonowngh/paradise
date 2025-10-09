@@ -1,9 +1,9 @@
 server:
    port: 29100
 
+adaptor:
+  type: INTERFACE_API
 spring:
-  profiles:
-    active: interface-info-api
   main:
     web-application-type: reactive
     allow-bean-definition-overriding: true

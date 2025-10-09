@@ -17,6 +17,16 @@ package org.crsh.text.renderers;/*
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
 import org.crsh.text.Color;
 import org.crsh.text.Decoration;
 import org.crsh.text.LineRenderer;
@@ -26,10 +36,6 @@ import org.crsh.text.ui.Overflow;
 import org.crsh.text.ui.RowElement;
 import org.crsh.text.ui.TableElement;
 import org.crsh.util.Utils;
-
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
-import java.util.*;
 
 public class ThreadRenderer extends Renderer<Thread> {
 

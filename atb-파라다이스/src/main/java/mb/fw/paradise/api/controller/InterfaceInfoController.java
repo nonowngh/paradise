@@ -2,23 +2,24 @@ package mb.fw.paradise.api.controller;
 
 import java.util.List;
 
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import mb.fw.paradise.api.model.InterfaceInfo;
 import mb.fw.paradise.api.service.InterfaceInfoService;
+import mb.fw.paradise.config.annotaion.ConditionalOnAdaptorType;
 import mb.fw.paradise.constants.APIContextPathConstants;
+import mb.fw.paradise.constants.AdaptorType;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-@Profile("interface-info-api")
 @RestController
+@ConditionalOnAdaptorType(AdaptorType.INTERFACE_API)
 @RequestMapping(APIContextPathConstants.INTERFACE_INFO_API)
 public class InterfaceInfoController {
 
@@ -28,8 +29,8 @@ public class InterfaceInfoController {
 		this.interfaceInfoService = interfaceInfoService;
 	}
 
-	@GetMapping("/{interfaceId}")
-	public Mono<ResponseEntity<InterfaceInfo>> getInterfaceInfo(@PathVariable String interfaceId) {
+	@GetMapping("")
+	public Mono<ResponseEntity<InterfaceInfo>> getInterfaceInfo(@RequestParam String interfaceId) {
 	    return Mono.fromSupplier(() -> {
 	        InterfaceInfo info = interfaceInfoService.getInterfaceInfoByInterfaceId(interfaceId);
 	        return (info != null)

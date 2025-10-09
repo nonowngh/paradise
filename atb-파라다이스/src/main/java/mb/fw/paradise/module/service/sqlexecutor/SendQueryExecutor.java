@@ -11,11 +11,14 @@ import org.springframework.stereotype.Service;
 
 import lombok.extern.slf4j.Slf4j;
 import mb.fw.paradise.api.model.SqlQuery;
+import mb.fw.paradise.config.annotaion.ConditionalOnAdaptorType;
+import mb.fw.paradise.constants.AdaptorType;
 import mb.fw.paradise.constants.SQLConstants;
 import mb.fw.paradise.dto.DataItem.Table;
 
 @Slf4j
 @Service
+@ConditionalOnAdaptorType(AdaptorType.DB)
 public class SendQueryExecutor {
 
 	@Qualifier("simpleSqlSessionTemplate")

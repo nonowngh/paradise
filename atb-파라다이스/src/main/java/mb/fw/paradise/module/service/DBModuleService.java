@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 import mb.fw.paradise.api.model.InterfaceInfo;
 import mb.fw.paradise.api.model.PatternProperty;
 import mb.fw.paradise.api.model.SqlQuery;
+import mb.fw.paradise.config.annotaion.ConditionalOnAdaptorType;
+import mb.fw.paradise.constants.AdaptorType;
 import mb.fw.paradise.constants.ESBCommonFieldConstants;
 import mb.fw.paradise.constants.ESBStatusConstants;
 import mb.fw.paradise.constants.InterfaceInfoPropertyConstants;
@@ -27,6 +29,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 @Service
+@ConditionalOnAdaptorType(AdaptorType.DB)
 public class DBModuleService {
 
 	@Autowired

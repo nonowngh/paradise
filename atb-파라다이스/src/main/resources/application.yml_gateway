@@ -1,13 +1,10 @@
 server:
   port: 29000
 
+adaptor:
+  type: GATEWAY
+
 spring:
-#  profiles:
-#    active: local
-#  cache:
-#    cache-names: interfaceInfoCache
-#    caffeine:
-#      spec: maximumSize=300,expireAfterWrite=30m
   cloud:
     gateway:
       routes:
@@ -30,5 +27,4 @@ spring:
     exclude:
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
       - org.springframework.boot.autoconfigure.quartz.QuartzAutoConfiguration
-  mustache:
-    check-template-location: false
+      - org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration

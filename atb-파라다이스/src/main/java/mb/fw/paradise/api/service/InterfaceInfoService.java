@@ -4,17 +4,18 @@ import java.util.List;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import lombok.extern.slf4j.Slf4j;
 import mb.fw.paradise.api.mapper.InterfaceInfoMapper;
 import mb.fw.paradise.api.model.InterfaceInfo;
+import mb.fw.paradise.config.annotaion.ConditionalOnAdaptorType;
+import mb.fw.paradise.constants.AdaptorType;
 import reactor.core.publisher.Mono;
 
-@Profile("interface-info-api")
 @Slf4j
 @Service
+@ConditionalOnAdaptorType(AdaptorType.INTERFACE_API)
 public class InterfaceInfoService {
 	private final InterfaceInfoMapper interfaceInfoMapper;
 

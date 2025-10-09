@@ -6,21 +6,25 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.scheduling.annotation.EnableAsync;
 
-import lombok.extern.slf4j.Slf4j;
+import com.mb.indigo2.springsupport.AdaptorConfig;
 
-@ImportResource({"classpath:bean.xml"})
-//@EnableScheduling
+import lombok.extern.slf4j.Slf4j;
+import mb.fw.adaptor.util.AdaptorStarter;
+import mb.fw.atb.util.MDCLogging;
+
+@ImportResource({ "classpath:bean.xml" })
 @EnableAsync
 @SpringBootApplication
 @Slf4j
-@ComponentScan(basePackages = {"mb.fw.paradise", "mb.fw.adaptor"})
+@ComponentScan(basePackages = { "mb.fw.paradise", "mb.fw.adaptor" })
 public class ParadiseApplication {
-    public static void main(String[] args) throws Exception {
-//        System.setProperty("javax.xml.parsers.DocumentBuilderFactory", "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl");
-//        AdaptorStarter.init();
-//        String adaptorName = AdaptorConfig.getInstance().getAdaptorName();
-//        log.info("adaptorName: {}", adaptorName);
-//        MDCLogging.create("NONE", "NONE", adaptorName);
-        SpringApplication.run(ParadiseApplication.class, args);
-    }
+	public static void main(String[] args) throws Exception {
+//		System.setProperty("javax.xml.parsers.DocumentBuilderFactory",
+//				"com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl");
+//		AdaptorStarter.init();
+//		String adaptorName = AdaptorConfig.getInstance().getAdaptorName();
+//		log.info("adaptorName: {}", adaptorName);
+//		MDCLogging.create("NONE", "NONE", adaptorName);
+		SpringApplication.run(ParadiseApplication.class, args);
+	}
 }

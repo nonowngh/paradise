@@ -6,16 +6,15 @@ web:
     interface-info-url: http://127.0.0.1:8090
     gateway-url: http://127.0.0.1:28000
 
-module:
-  register-prop:
+adaptor:
+  type: DB
+  module-prop:
     system-code: EAS
     batch-task: dbPollingAndSend
     interface-list:
       - IF_UAS_CB_TRS_002
 
 spring:
-  profiles:
-    active: scheduler
   main:
     web-application-type: reactive
     allow-bean-definition-overriding: true
@@ -23,4 +22,5 @@ spring:
     exclude:
       - org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration
 #      - org.springframework.boot.autoconfigure.quartz.QuartzAutoConfiguration
+#      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
       

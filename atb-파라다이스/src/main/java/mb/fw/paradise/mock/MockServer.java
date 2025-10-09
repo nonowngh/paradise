@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 import mb.fw.paradise.api.model.InterfaceInfo;
 import mb.fw.paradise.constants.APIContextPathConstants;
 
-@Profile("scheduler")
+@Profile("local")
 @Component
 @RequiredArgsConstructor
 public class MockServer {

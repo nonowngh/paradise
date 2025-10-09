@@ -1,10 +1,11 @@
 package mb.fw.paradise.module.scheduler;
 
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import lombok.extern.slf4j.Slf4j;
 import mb.fw.atb.util.TransactionIdGenerator;
+import mb.fw.paradise.config.annotaion.ConditionalOnAdaptorType;
+import mb.fw.paradise.constants.AdaptorType;
 import mb.fw.paradise.constants.PatternType;
 import mb.fw.paradise.constants.TargetContextPathConstants;
 import mb.fw.paradise.dto.APIRequestMessage;
@@ -16,7 +17,7 @@ import reactor.core.publisher.Mono;
 
 @Slf4j
 @Component("dbPollingAndSend")
-@Profile("scheduler")
+@ConditionalOnAdaptorType(AdaptorType.DB)
 public class DBPollingAndSend implements BatchModule {
 
 	private final APIService apiService;
@@ -51,7 +52,9 @@ public class DBPollingAndSend implements BatchModule {
 											.dataItem(dataItem).totalDataCount(updateCount).build(),
 									targetPath, interfaceInfo.getSndSystemCode(), interfaceInfo.getRcvSystemCode(),
 									callBackPath));
-				})).doOnError(e -> log.error("오류 발생: {}", e.getMessage(), e)).subscribe();
-		log.info("Batch interface end '{}' -> [{}]", interfaceId, transactionId);
+				})).doOnError(e -> log.error("오류 발생: {}", e.getMessage(), e))
+				.doFinally(signalType -> log.info("Batch interface end '{}' -> [{}]", interfaceId, transactionId))
+				.subscribe();
+//		log.info("Batch interface end '{}' -> [{}]", interfaceId, transactionId);
 	}
 }

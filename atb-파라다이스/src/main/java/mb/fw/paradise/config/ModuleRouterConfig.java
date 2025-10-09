@@ -10,7 +10,7 @@ import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
 import lombok.extern.slf4j.Slf4j;
-import mb.fw.paradise.config.prop.RegisterProp;
+import mb.fw.paradise.config.prop.ModuleProp;
 import mb.fw.paradise.constants.AdaptorConstants;
 import mb.fw.paradise.constants.TargetContextPathConstants;
 import mb.fw.paradise.module.handler.DBReceiveProcessHandler;
@@ -20,7 +20,7 @@ import mb.fw.paradise.service.ExceptionService;
 
 @Slf4j
 @Configuration
-@ConditionalOnBean(RegisterProp.class)
+@ConditionalOnBean(ModuleProp.class)
 public class ModuleRouterConfig {
 
 	private final ExceptionService exceptionService;

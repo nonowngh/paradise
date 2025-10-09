@@ -13,11 +13,14 @@ import org.springframework.stereotype.Service;
 import mb.fw.paradise.api.model.InterfaceInfo;
 import mb.fw.paradise.api.model.SqlQuery;
 import mb.fw.paradise.config.MyBatisConfig;
+import mb.fw.paradise.config.annotaion.ConditionalOnAdaptorType;
+import mb.fw.paradise.constants.AdaptorType;
 import mb.fw.paradise.constants.SQLConstants;
 import mb.fw.paradise.dto.APIRequestMessage;
 import mb.fw.paradise.dto.DataItem.Table;
 
 @Service
+@ConditionalOnAdaptorType(AdaptorType.DB)
 public class ReceiveQueryExecutor {
 
 	@Qualifier("simpleSqlSessionTemplate")

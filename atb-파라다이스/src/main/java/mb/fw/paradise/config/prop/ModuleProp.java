@@ -5,7 +5,7 @@ import java.util.List;
 import lombok.Data;
 
 @Data
-public class RegisterProp {
+public class ModuleProp {
 
 	// 배치 스케줄 실행 task 클래스
 	private String batchTask;

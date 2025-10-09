@@ -1,5 +1,6 @@
 package mb.fw.paradise.service;
 
+import java.time.Duration;
 import java.util.NoSuchElementException;
 
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -14,6 +15,7 @@ import mb.fw.paradise.constants.ESBAPIHeaderConstants;
 import mb.fw.paradise.dto.APIRequestMessage;
 import mb.fw.paradise.dto.APIResponseMessage;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
 @Slf4j
 @Service
@@ -30,7 +32,8 @@ public class APIService {
 
 	public Mono<InterfaceInfo> getInterfaceInfo(String interfaceId) {
 		return interfaceInfoWebClient.get().uri(uriBuilder -> uriBuilder.queryParam("interfaceId", interfaceId).build())
-				.retrieve().bodyToMono(InterfaceInfo.class).switchIfEmpty(
+				.retrieve().bodyToMono(InterfaceInfo.class).retryWhen(Retry.backoff(3, Duration.ofSeconds(1)))
+				.switchIfEmpty(
 						Mono.error(new NoSuchElementException("InterfaceInfo not found for id : " + interfaceId)));
 	}
 

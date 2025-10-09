@@ -1,13 +1,12 @@
 package mb.fw.paradise.module.handler;
 
-import javax.sql.DataSource;
-
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
 import lombok.extern.slf4j.Slf4j;
+import mb.fw.paradise.config.annotaion.ConditionalOnAdaptorType;
+import mb.fw.paradise.constants.AdaptorType;
 import mb.fw.paradise.constants.ESBAPIHeaderConstants;
 import mb.fw.paradise.dto.APIRequestMessage;
 import mb.fw.paradise.module.service.DBModuleService;
@@ -17,7 +16,7 @@ import reactor.core.publisher.Mono;
 
 @Slf4j
 @Component
-@ConditionalOnBean(DataSource.class)
+@ConditionalOnAdaptorType(AdaptorType.DB)
 public class DBReceiveProcessHandler {
 
 	private final DBModuleService dbModuleService;

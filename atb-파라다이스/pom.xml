@@ -11,9 +11,9 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>mb.fw</groupId>
-    <artifactId>atb</artifactId>
+    <artifactId>atb-paradise</artifactId>
     <version>1.0.2</version>
-    <name>atb</name>
+    <name>atb-paradise</name>
     <description>Metabuild Inc, Made By clupine, AdaptorTemplateBoot Ver 1.0.2</description>
     <properties>
         <java.version>1.8</java.version>
@@ -128,6 +128,12 @@
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
             <version>20211205</version>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <!--<version>4.10.0</version>-->
+            <version>3.14.9</version>
         </dependency>
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
@@ -251,6 +257,11 @@
           <artifactId>caffeine</artifactId>
           <version>2.9.3</version> <!-- JDK 8 호환 마지막 버전 -->
         </dependency>
+        <dependency>
+  <groupId>com.squareup.okio</groupId>
+  <artifactId>okio</artifactId>
+  <version>1.17.5</version>
+</dependency>
 
 <!--         Optional: actuator for health checks 
         <dependency>
@@ -285,6 +296,12 @@
                         </exclude>
                     </excludes>
                     <excludeDevtools>false</excludeDevtools>
+                    <includes>
+                        <include>
+                            <groupId>aaa</groupId>
+                            <artifactId>aaa</artifactId>
+                        </include>
+                    </includes>
                 </configuration>
             </plugin>
             <plugin>
@@ -306,7 +323,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
+               <!-- <executions>
                     <execution>
                         <id>copy-springboot-dependencies</id>
                         <phase>package</phase>
@@ -317,7 +334,7 @@
                             <outputDirectory>${project.build.directory}/ATB_LIB</outputDirectory>
                         </configuration>
                     </execution>
-                </executions>
+                </executions>-->
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
