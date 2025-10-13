@@ -74,4 +74,25 @@ public class APIService {
 		});
 	}
 
+	public Mono<APIResponseMessage> callGatewaySync(APIRequestMessage request, String targetPath, String sendSystemCode,
+			String receiveSystemCode) {
+		return gatewayWebClient.post().uri(targetPath).headers(headers -> {
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			headers.set(ESBAPIHeaderConstants.INTERFACE_ID, request.getInterfaceId());
+			headers.set(ESBAPIHeaderConstants.TRANSACTION_ID, request.getTransactionId());
+			headers.set(ESBAPIHeaderConstants.SEND_SYSTEM_CODE, sendSystemCode);
+			headers.set(ESBAPIHeaderConstants.RECEIVE_SYSTEM_CODE, receiveSystemCode);
+			headers.set(ESBAPIHeaderConstants.TOTAL_COUNT, String.valueOf(request.getTotalDataCount()));
+			headers.set(ESBAPIHeaderConstants.CALL_SYNC, String.valueOf(true));
+//			headers.set(ESBAPIHeaderConstants.CALL_BACK_PATH, callBackPath);
+//			headers.set("Authorization", "Bearer " + )); // 토큰이 있는 경우
+		}).bodyValue(request).retrieve()
+				.onStatus(HttpStatus::isError,
+						clientResponse -> clientResponse.bodyToMono(String.class).flatMap(
+								errorBody -> Mono.error(new RuntimeException("데이터 전송 중 오류 발생 : " + errorBody))))
+				.bodyToMono(APIResponseMessage.class).doOnTerminate(() -> {
+					log.info("데이터 전송 완료");
+				});
+	}
+
 }

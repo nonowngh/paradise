@@ -15,6 +15,7 @@ import mb.fw.paradise.constants.AdaptorType;
 import mb.fw.paradise.constants.TargetContextPathConstants;
 import mb.fw.paradise.module.handler.DBReceiveProcessHandler;
 import mb.fw.paradise.module.handler.DBResultProcessHandler;
+import mb.fw.paradise.module.handler.ESBAPIServletHandler;
 import mb.fw.paradise.module.handler.RFCCallHandler;
 import mb.fw.paradise.service.ExceptionService;
 
@@ -41,12 +42,23 @@ public class ModuleRouterConfig {
 	}
 
 	@Bean
-	RouterFunction<ServerResponse> sendRoutes(DBResultProcessHandler DBResultProcessHandler) {
+	RouterFunction<ServerResponse> sendRoutes(DBResultProcessHandler dbResultProcessHandler,
+			ESBAPIServletHandler esbAPIServletHandler) {
 		return RouterFunctions.route()
 				.POST(TargetContextPathConstants.DEFAULT_PATH + AdaptorConstants.MY_SYSTEM_CODE
-						+ TargetContextPathConstants.RESULT_DB_PROCESS, DBResultProcessHandler::dbResultProcess)
+						+ TargetContextPathConstants.RESULT_DB_PROCESS, dbResultProcessHandler::dbResultProcess)
+				.POST(TargetContextPathConstants.DEFAULT_PATH + AdaptorConstants.MY_SYSTEM_CODE
+						+ TargetContextPathConstants.SND_COMMON_API, esbAPIServletHandler::callGateway)
 				.build().filter(logRequestAndResponse()).filter(moduleResultExceptionHandler());
 	}
+
+//	@Bean
+//	RouterFunction<ServerResponse> sendAPIRoutes(ESBAPIServletHandler esbAPIServletHandler) {
+//		return RouterFunctions.route()
+//				.POST(TargetContextPathConstants.DEFAULT_PATH + AdaptorConstants.MY_SYSTEM_CODE
+//						+ TargetContextPathConstants.SND_COMMON_API, esbAPIServletHandler::callGateway)
+//				.build().filter(logRequestAndResponse()).filter(moduleResultExceptionHandler());
+//	}
 
 //	private HandlerFilterFunction<ServerResponse, ServerResponse> moduleExceptionHandler() {
 //		return (request, next) -> request.bodyToMono(APIRequestMessage.class).flatMap(dto -> {
@@ -57,6 +69,7 @@ public class ModuleRouterConfig {
 //			});
 //		});
 //	}
+
 	private HandlerFilterFunction<ServerResponse, ServerResponse> moduleExceptionHandler() {
 		return (request, next) -> {
 			HttpHeaders headers = request.headers().asHttpHeaders();

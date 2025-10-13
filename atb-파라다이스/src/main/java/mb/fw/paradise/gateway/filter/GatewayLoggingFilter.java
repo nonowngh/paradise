@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 
 import lombok.extern.slf4j.Slf4j;
+import mb.fw.atb.strategy.test.SpringBootHealthCheck;
 import mb.fw.paradise.constants.ESBAPIHeaderConstants;
 import mb.fw.paradise.constants.ESBStatusConstants;
 import mb.fw.paradise.service.LoggingService;
@@ -24,12 +25,15 @@ import reactor.core.publisher.Mono;
 @Order(1)
 public class GatewayLoggingFilter implements GlobalFilter {
 
+    private final SpringBootHealthCheck SpringBootHealthCheck;
+
 	private final Optional<JmsTemplate> jmsTemplate;
 	private LoggingService loggingService;
 
-	public GatewayLoggingFilter(Optional<JmsTemplate> jmsTemplate, LoggingService loggingService) {
+	public GatewayLoggingFilter(Optional<JmsTemplate> jmsTemplate, LoggingService loggingService, SpringBootHealthCheck SpringBootHealthCheck) {
 		this.jmsTemplate = jmsTemplate;
 		this.loggingService = loggingService;
+		this.SpringBootHealthCheck = SpringBootHealthCheck;
 	}
 
 	@Override
@@ -66,6 +70,11 @@ public class GatewayLoggingFilter implements GlobalFilter {
 		exchange.getAttributes().put("totalCount", totalCount);
 		exchange.getAttributes().put("errorCount", errorCount);
 		exchange.getAttributes().put("callBackPath", callBackPath);
+		
+		//동기 인터페이스 경우, 요청시에도 로깅 jms 송신
+		if(!HttpHeaderUtil.getHeader(headers, ESBAPIHeaderConstants.CALL_SYNC).isEmpty()) {
+			processByHeaders(exchange, null);
+		}
 
 		return chain.filter(exchange).doFinally(signalType -> {
 			HttpStatus statusCode = exchange.getResponse().getStatusCode();

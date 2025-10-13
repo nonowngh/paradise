@@ -262,6 +262,11 @@
   <artifactId>okio</artifactId>
   <version>1.17.5</version>
 </dependency>
+<dependency>
+  <groupId>mb.fw</groupId>
+  <artifactId>indigo_sapjco3</artifactId>
+  <version>local</version>
+</dependency>
 
 <!--         Optional: actuator for health checks 
         <dependency>
