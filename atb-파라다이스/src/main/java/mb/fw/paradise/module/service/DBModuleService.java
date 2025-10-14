@@ -41,8 +41,7 @@ public class DBModuleService {
 	@Transactional
 	public Mono<APIResponseMessage> dbProcessAndResponse(InterfaceInfo interfaceInfo, APIRequestMessage request) {
 		return Mono.fromCallable(() -> {
-			List<PatternProperty> propertyList = new ArrayList<>(interfaceInfo.getPropertyList());
-			String workType = InterfaceInfoPropertyUtil.getValue(propertyList,
+			String workType = InterfaceInfoPropertyUtil.getValue(new ArrayList<>(interfaceInfo.getPropertyList()),
 					InterfaceInfoPropertyConstants.DB_WORK_TYPE);
 			for (char ch : workType.toCharArray()) {
 				switch (ch) {

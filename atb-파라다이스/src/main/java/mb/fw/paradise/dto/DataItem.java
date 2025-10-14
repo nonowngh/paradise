@@ -11,25 +11,25 @@ import lombok.Data;
 @Builder
 public class DataItem {
 
-	private Table table;
+	LinkedHashMap<String, List<Map<String, Object>>> table;
 
-	private Structure structure;
+	LinkedHashMap<String, Map<String, Object>> structure;
 
-	private Parameter parameter;
+	LinkedHashMap<String, Object> parameter;
 
-	@Data
-	@Builder
-	public static class Table {
-		LinkedHashMap<String, List<Map<String, Object>>> tableItem;
-	}
-
-	@Data
-	public static  class Structure {
-		LinkedHashMap<String, Map<String, Object>> structureItem;
-	}
-
-	@Data
-	public static class Parameter {
-		LinkedHashMap<String, Object> parameterItem;
-	}
+//	@Data
+//	@Builder
+//	public static class Table {
+//		LinkedHashMap<String, List<Map<String, Object>>> tableItem;
+//	}
+//
+//	@Data
+//	public static  class Structure {
+//		LinkedHashMap<String, Map<String, Object>> structureItem;
+//	}
+//
+//	@Data
+//	public static class Parameter {
+//		LinkedHashMap<String, Object> parameterItem;
+//	}
 }

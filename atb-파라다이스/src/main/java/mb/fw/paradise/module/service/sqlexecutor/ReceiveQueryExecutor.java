@@ -1,6 +1,7 @@
 package mb.fw.paradise.module.service.sqlexecutor;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -17,7 +18,6 @@ import mb.fw.paradise.config.annotaion.ConditionalOnAdaptorType;
 import mb.fw.paradise.constants.AdaptorType;
 import mb.fw.paradise.constants.SQLConstants;
 import mb.fw.paradise.dto.APIRequestMessage;
-import mb.fw.paradise.dto.DataItem.Table;
 
 @Service
 @ConditionalOnAdaptorType(AdaptorType.DB)
@@ -39,8 +39,8 @@ public class ReceiveQueryExecutor {
 
 	public void processDelete(InterfaceInfo interfaceInfo, APIRequestMessage request) {
 		List<SqlQuery> queryList = new ArrayList<>(interfaceInfo.getSqlQueryList());
-		Table tableData = request.getDataItem().getTable();
-		tableData.getTableItem().forEach((tableName, data) -> {
+		LinkedHashMap<String, List<Map<String, Object>>> tableData = request.getDataItem().getTable();
+		tableData.forEach((tableName, data) -> {
 			String expectedSqlId = SQLConstants.SQL_ID_DELETE + "." + tableName;
 			queryList.stream().filter(q -> expectedSqlId.equals(q.getSqlId())).findFirst().ifPresent(query -> {
 				simpleSqlSessionTemplate.delete(query.getQuery());
@@ -50,8 +50,8 @@ public class ReceiveQueryExecutor {
 
 	public void processInsert(InterfaceInfo interfaceInfo, APIRequestMessage request) {
 		List<SqlQuery> queryList = new ArrayList<>(interfaceInfo.getSqlQueryList());
-		Table tableData = request.getDataItem().getTable();
-		tableData.getTableItem().forEach((tableName, data) -> {
+		LinkedHashMap<String, List<Map<String, Object>>> tableData = request.getDataItem().getTable();
+		tableData.forEach((tableName, data) -> {
 			String expectedSqlId = SQLConstants.SQL_ID_INSERT + "." + tableName;
 
 			queryList.stream().filter(q -> expectedSqlId.equals(q.getSqlId())).findFirst().ifPresent(query -> {

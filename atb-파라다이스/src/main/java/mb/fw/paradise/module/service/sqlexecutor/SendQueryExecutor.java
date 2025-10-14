@@ -14,7 +14,6 @@ import mb.fw.paradise.api.model.SqlQuery;
 import mb.fw.paradise.config.annotaion.ConditionalOnAdaptorType;
 import mb.fw.paradise.constants.AdaptorType;
 import mb.fw.paradise.constants.SQLConstants;
-import mb.fw.paradise.dto.DataItem.Table;
 
 @Slf4j
 @Service
@@ -41,7 +40,7 @@ public class SendQueryExecutor {
 		return updateCount;
 	}
 
-	public Table getTableData(List<String> sendTableNameList, List<String> recvTableNameList, List<SqlQuery> queryList,
+	public LinkedHashMap<String, List<Map<String, Object>>> getTableData(List<String> sendTableNameList, List<String> recvTableNameList, List<SqlQuery> queryList,
 			Map<String, Object> params) throws Exception {
 		// 데이터 조회
 		LinkedHashMap<String, List<Map<String, Object>>> tableItem = new LinkedHashMap<>();
@@ -59,7 +58,7 @@ public class SendQueryExecutor {
 				throw new Exception("Nothing sql-id [" + SQLConstants.SQL_ID_SELECT + "." + tableName + "]");
 			}
 		}
-		return Table.builder().tableItem(tableItem).build();
+		return tableItem;
 	}
 
 	public int resultUpdate(List<String> tableNameList, List<SqlQuery> queryList, Map<String, Object> params) {
