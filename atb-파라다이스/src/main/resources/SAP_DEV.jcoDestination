@@ -1,0 +1,5 @@
+jco.server.gwhost=localhost
+jco.server.gwserv=3300
+jco.server.progid=MOCK_SERVER
+jco.server.connection_count=2
+jco.server.repository_destination=MY_DEST

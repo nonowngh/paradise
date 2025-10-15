@@ -9,14 +9,11 @@ import org.springframework.context.annotation.Configuration;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import mb.fw.paradise.config.annotaion.ConditionalOnAdaptorType;
 import mb.fw.paradise.constants.AdaptorConstants;
-import mb.fw.paradise.constants.AdaptorType;
 
 @Slf4j
 @Data
 @Configuration
-@ConditionalOnAdaptorType(value = { AdaptorType.INTERFACE_API, AdaptorType.GATEWAY }, negate = true)
 @ConfigurationProperties(prefix = "adaptor.module-config", ignoreUnknownFields = true)
 public class ModuleConfig {
 
@@ -33,7 +30,7 @@ public class ModuleConfig {
 			log.info("Setting property batch-task : {}", batchTask);
 		if (interfaceList != null && !interfaceList.isEmpty())
 			log.info("Setting property interface-list : {}", interfaceList);
-		if (!systemCode.isEmpty()) {
+		if (systemCode != null && !systemCode.isEmpty()) {
 			log.info("Setting property my system-code : {}", systemCode);
 			AdaptorConstants.MY_SYSTEM_CODE = systemCode;
 		}

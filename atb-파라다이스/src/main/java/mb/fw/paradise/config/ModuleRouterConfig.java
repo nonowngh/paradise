@@ -23,7 +23,7 @@ import mb.fw.paradise.util.HttpHeaderUtil;
 
 @Slf4j
 @Configuration
-@ConditionalOnAdaptorType(value = { AdaptorType.INTERFACE_API, AdaptorType.GATEWAY }, negate = true)
+@ConditionalOnAdaptorType(value = { AdaptorType.INTERFACE_API, AdaptorType.GATEWAY, AdaptorType.RFC_SIMUL }, negate = true)
 public class ModuleRouterConfig {
 
 	private final ExceptionService exceptionService;

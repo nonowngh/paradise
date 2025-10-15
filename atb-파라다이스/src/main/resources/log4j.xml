@@ -28,6 +28,9 @@
         <category name="com.mb.indigo2.imagent.HeartbeatAgent">
         <priority value="ERROR"/>
     </category>
+    <category name="org.springframework.cloud.gateway.route.RouteDefinitionRouteLocator">
+        <priority value="WARN"/>
+    </category>
 
     <root>
         <level value="DEBUG"/>
