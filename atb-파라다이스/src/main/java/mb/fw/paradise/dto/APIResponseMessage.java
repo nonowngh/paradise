@@ -11,7 +11,7 @@ public class APIResponseMessage {
 
 	private String transactionId;
 
-	private DataItem dataItem;
+	private DataItem resultItem;
 
 	private String statusCode;
 

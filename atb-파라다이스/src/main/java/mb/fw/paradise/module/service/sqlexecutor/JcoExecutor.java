@@ -3,6 +3,10 @@ package mb.fw.paradise.module.service.sqlexecutor;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import org.apache.commons.codec.binary.Base64;
 
 import com.sap.conn.jco.JCoField;
 import com.sap.conn.jco.JCoFieldIterator;
@@ -11,6 +15,7 @@ import com.sap.conn.jco.JCoRecordMetaData;
 import com.sap.conn.jco.JCoTable;
 
 import lombok.extern.slf4j.Slf4j;
+import mb.fw.paradise.dto.DataItem;
 
 @Slf4j
 public class JcoExecutor {
@@ -30,7 +35,6 @@ public class JcoExecutor {
 					data.forEach(row -> {
 						StringBuffer printRow = new StringBuffer();
 						jcoTable.appendRow();
-
 						row.keySet().forEach(key -> {
 							for (int fieldCnt = 0; fieldCnt < metaData.getFieldCount(); fieldCnt++) {
 								String fieldName = metaData.getName(fieldCnt);
@@ -49,6 +53,78 @@ public class JcoExecutor {
 				}
 			});
 		}
+	}
+
+	public static void importParms(LinkedHashMap<String, Object> parameter, JCoParameterList paramList) {
+		if (paramList != null) {
+			JCoFieldIterator jcoFieldIterator = paramList.getFieldIterator();
+
+			while (jcoFieldIterator.hasNextField()) {
+				JCoField jcoField = jcoFieldIterator.nextField();
+
+				if ("STRUCTURE".equals(jcoField.getTypeAsString())) {
+//					JCoStructure jcoStructure = jcoField.getStructure();
+//					for(int i=0;i<structureArray.length();i++){
+//						JSONObject structureJsonObj = structureArray.getJSONObject(i);
+//						JSONArray structureNames = structureJsonObj.names();
+//						for(Object structureNameObj : structureNames){
+//							String structureName = (String)structureNameObj;
+//							JSONObject structureObj = structureJsonObj.getJSONObject(structureName);
+//							JSONArray structureColNames = structureObj.names();
+//							for(Object structureColNameObj : structureColNames){
+//								String structureColName = (String)structureColNameObj;
+//								String structureColValue = Util.getJsonValueAsString(structureObj, structureColName);
+//								
+//								if(jcoField.getName().equalsIgnoreCase(structureName) && checkHasField(jcoStructure, structureColName)){
+//									jcoStructure.setValue(structureColName, structureColValue);
+//								}
+//							}
+//						}
+//					}
+					// JCoField인 경우 처리
+				} else {
+					parameter.forEach((key, value) -> {
+						if (jcoField.getName().equalsIgnoreCase(key)) {
+							if (key.equalsIgnoreCase("I_DATA")) {
+								log.debug("decode I_DATA.");
+								byte[] decoded = Base64.decodeBase64(value.toString());
+								jcoField.setValue(decoded);
+							} else {
+								jcoField.setValue(value);
+							}
+						}
+					});
+				}
+			}
+		}
+	}
+
+	public static DataItem exportData(JCoParameterList exportParamList, JCoParameterList tableParamList,
+			List<String> exportTableList) {
+		LinkedHashMap<String, Object> resultParamMap = new LinkedHashMap<>();
+		int fieldCnt = exportParamList.getFieldCount();
+		for (int i = 0; i < fieldCnt; i++)
+			resultParamMap.put(exportParamList.getMetaData().getName(i), exportParamList.getValue(i));
+
+		LinkedHashMap<String, List<Map<String, Object>>> resultTableMap = exportTableList.stream()
+				.collect(Collectors.toMap(tableName -> tableName,
+						tableName -> convertJCoTable(tableParamList.getTable(tableName)), (v1, v2) -> v1,
+						LinkedHashMap::new));
+
+		return DataItem.builder().parameter(resultParamMap).table(resultTableMap).build();
+	}
+
+	private static List<Map<String, Object>> convertJCoTable(JCoTable table) {
+		return IntStream.range(0, table.getNumRows()).mapToObj(i -> {
+			table.setRow(i);
+			Map<String, Object> row = new LinkedHashMap<>();
+			JCoFieldIterator it = table.getFieldIterator();
+			while (it.hasNextField()) {
+				JCoField field = it.nextField();
+				row.put(field.getName(), field.getValue());
+			}
+			return row;
+		}).collect(Collectors.toList());
 	}
 }
 

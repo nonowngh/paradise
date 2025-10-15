@@ -45,7 +45,7 @@ public class ESBAPIServletHandler {
 					log.error("Error [API call-gateway process] -> {}", error.getMessage(), error);
 					return ServerResponse.status(500)
 							.bodyValue(APIResponseMessage.builder().interfaceId(request.getInterfaceId())
-									.dataItem(request.getDataItem()).statusCode(ESBStatusConstants.FAIL)
+									.resultItem(request.getDataItem()).statusCode(ESBStatusConstants.FAIL)
 									.statusMessage(error.getMessage()).build());
 				}));
 	}
