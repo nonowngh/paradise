@@ -8,7 +8,7 @@ web:
 
 adaptor:
   type: DB
-  module-prop:
+  module-config:
     system-code: EAS
     batch-task: dbPollingAndSend
     interface-list:

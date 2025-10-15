@@ -27,9 +27,11 @@ import mb.fw.paradise.util.HttpHeaderUtil;
 public class ModuleRouterConfig {
 
 	private final ExceptionService exceptionService;
+	private final ModuleConfig config;
 
-	public ModuleRouterConfig(ExceptionService exceptionService) {
+	public ModuleRouterConfig(ExceptionService exceptionService, ModuleConfig config) {
 		this.exceptionService = exceptionService;
+		this.config = config;
 	}
 
 	@Bean
@@ -40,7 +42,8 @@ public class ModuleRouterConfig {
 						+ TargetContextPathConstants.RCV_DB_PROCESS, dbProcessHandler::dbProcess)
 				.POST(TargetContextPathConstants.DEFAULT_PATH + AdaptorConstants.MY_SYSTEM_CODE
 						+ TargetContextPathConstants.RCV_RFC_CALL, rfcCallHandler::rfcCall)
-				.build().filter(logRequestAndResponse()).filter(moduleExceptionHandler());
+				.build().filter(logRequestAndResponse()).filter(checkAllowInterfaceList())
+				.filter(moduleExceptionHandler());
 	}
 
 	@Bean
@@ -51,7 +54,8 @@ public class ModuleRouterConfig {
 						+ TargetContextPathConstants.RESULT_DB_PROCESS, dbResultProcessHandler::dbResultProcess)
 				.POST(TargetContextPathConstants.DEFAULT_PATH + AdaptorConstants.MY_SYSTEM_CODE
 						+ TargetContextPathConstants.SND_COMMON_API, esbAPIServletHandler::callGateway)
-				.build().filter(logRequestAndResponse()).filter(moduleResultExceptionHandler());
+				.build().filter(logRequestAndResponse()).filter(checkAllowInterfaceList())
+				.filter(moduleResultExceptionHandler());
 	}
 
 //	@Bean
@@ -107,14 +111,17 @@ public class ModuleRouterConfig {
 		};
 	}
 
-//	private HandlerFilterFunction<ServerResponse, ServerResponse> checkInterfaceList() {
-//		return (request, next) -> {
-//			HttpHeaders headers = request.headers().asHttpHeaders();
-//			String interfaceId = HttpHeaderUtil.getHeader(headers, ESBAPIHeaderConstants.INTERFACE_ID);
-//			config.getModuleProp().getInterfaceList().stream().findAny().or
-//			return next.handle(request).doOnSuccess(response -> {
-//			}).doOnError(e -> {
-//			});
-//		};
-//	}
+	private HandlerFilterFunction<ServerResponse, ServerResponse> checkAllowInterfaceList() {
+		return (request, next) -> {
+			HttpHeaders headers = request.headers().asHttpHeaders();
+			String interfaceId = HttpHeaderUtil.getHeader(headers, ESBAPIHeaderConstants.INTERFACE_ID);
+			boolean allowed = config.getInterfaceList().stream().anyMatch(id -> id.equals(interfaceId));
+			if (!allowed) {
+				exceptionService.receiveHandlerExceptionProcess(new Exception("등록되지 않은 인터페이스 아이디 -> " + interfaceId),
+						headers);
+				return ServerResponse.noContent().build();
+			}
+			return next.handle(request);
+		};
+	}
 }

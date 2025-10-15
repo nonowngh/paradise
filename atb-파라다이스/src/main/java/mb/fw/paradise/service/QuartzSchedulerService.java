@@ -20,7 +20,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import lombok.extern.slf4j.Slf4j;
 import mb.fw.paradise.api.model.InterfaceInfo;
-import mb.fw.paradise.config.RegisterModuleConfig;
+import mb.fw.paradise.config.ModuleConfig;
 import mb.fw.paradise.constants.APIContextPathConstants;
 import mb.fw.paradise.service.job.DynamicQuartzJob;
 
@@ -30,10 +30,10 @@ public class QuartzSchedulerService {
 
 	private Scheduler scheduler;
 	private WebClient interfaceInfoWebClient;
-	private final RegisterModuleConfig config;
+	private final ModuleConfig config;
 
 	public QuartzSchedulerService(@Autowired(required = false) Scheduler scheduler,
-			@Qualifier("interfaceInfoWebClient") WebClient interfaceInfoWebClient, RegisterModuleConfig config) {
+			@Qualifier("interfaceInfoWebClient") WebClient interfaceInfoWebClient, ModuleConfig config) {
 		this.scheduler = scheduler;
 		this.interfaceInfoWebClient = interfaceInfoWebClient;
 		this.config = config;
@@ -45,12 +45,11 @@ public class QuartzSchedulerService {
 			return;
 		try {
 			List<InterfaceInfo> cronScheduleInfoList = interfaceInfoWebClient.post()
-					.uri(APIContextPathConstants.INTERFACE_INFO_API_SCHEDULE_LIST)
-					.bodyValue(config.getModuleProp().getInterfaceList()).retrieve()
-					.bodyToMono(new ParameterizedTypeReference<List<InterfaceInfo>>() {
+					.uri(APIContextPathConstants.INTERFACE_INFO_API_SCHEDULE_LIST).bodyValue(config.getInterfaceList())
+					.retrieve().bodyToMono(new ParameterizedTypeReference<List<InterfaceInfo>>() {
 					}).block(); // ← 동기 호출;
 
-			String taskName = config.getModuleProp().getBatchTask();
+			String taskName = config.getBatchTask();
 			if (cronScheduleInfoList != null) {
 				for (InterfaceInfo info : cronScheduleInfoList) {
 					log.info("Register cron schedule info [{}] -> {}", info.getInterfaceId(), info.getCronExpression());
