@@ -7,8 +7,11 @@ import org.springframework.jms.core.JmsTemplate;
 
 import com.indigo.indigomq.pool.PooledConnectionFactory;
 
+import mb.fw.paradise.config.annotaion.ConditionalOnAdaptorType;
+import mb.fw.paradise.constants.AdaptorType;
+
 @Configuration
-//@ConditionalOnProperty(name = "jms.logging.enabled", havingValue = "true")
+@ConditionalOnAdaptorType(AdaptorType.GATEWAY)
 public class JmsTemplateConfig {
 
 	@Bean

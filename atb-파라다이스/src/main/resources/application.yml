@@ -1,5 +1,5 @@
 server:
-  port: 29002
+  port: 29011
 
 web:
   client:
@@ -7,9 +7,25 @@ web:
     gateway-url: http://127.0.0.1:28000
 
 adaptor:
-  type: DB
+  type: RFC
   module-prop:
-    system-code: EAS
+    system-code: SAP
+    interface-list:
+      - IF_UAS_CB_TRS_002
+
+sap:
+  connection:
+    destination-name: indigoJco
+    ashost: 127.0.0.1
+    r3name: 00
+    msserv: 9090
+    client: indigo
+    user: indigo
+    passwd: meta1234!
+    lang: ko
+    group: indigo
+    trace: 00
+    sysnr: 01    
 
 spring:
   main:
@@ -19,5 +35,5 @@ spring:
     exclude:
       - org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration
       - org.springframework.boot.autoconfigure.quartz.QuartzAutoConfiguration
-#     - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
       

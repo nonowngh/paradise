@@ -18,7 +18,6 @@ import reactor.core.publisher.Mono;
 
 @Slf4j
 @Component
-@ConditionalOnAdaptorType(AdaptorType.API)
 public class ESBAPIServletHandler {
 
 	private final APIService apiService;

@@ -12,12 +12,14 @@ import lombok.extern.slf4j.Slf4j;
 import mb.fw.paradise.config.annotaion.ConditionalOnAdaptorType;
 import mb.fw.paradise.constants.AdaptorConstants;
 import mb.fw.paradise.constants.AdaptorType;
+import mb.fw.paradise.constants.ESBAPIHeaderConstants;
 import mb.fw.paradise.constants.TargetContextPathConstants;
 import mb.fw.paradise.module.handler.DBReceiveProcessHandler;
 import mb.fw.paradise.module.handler.DBResultProcessHandler;
 import mb.fw.paradise.module.handler.ESBAPIServletHandler;
 import mb.fw.paradise.module.handler.RFCCallHandler;
 import mb.fw.paradise.service.ExceptionService;
+import mb.fw.paradise.util.HttpHeaderUtil;
 
 @Slf4j
 @Configuration
@@ -104,4 +106,15 @@ public class ModuleRouterConfig {
 			});
 		};
 	}
+
+//	private HandlerFilterFunction<ServerResponse, ServerResponse> checkInterfaceList() {
+//		return (request, next) -> {
+//			HttpHeaders headers = request.headers().asHttpHeaders();
+//			String interfaceId = HttpHeaderUtil.getHeader(headers, ESBAPIHeaderConstants.INTERFACE_ID);
+//			config.getModuleProp().getInterfaceList().stream().findAny().or
+//			return next.handle(request).doOnSuccess(response -> {
+//			}).doOnError(e -> {
+//			});
+//		};
+//	}
 }
