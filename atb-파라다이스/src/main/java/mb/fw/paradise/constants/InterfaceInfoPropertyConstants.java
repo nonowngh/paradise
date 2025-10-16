@@ -17,7 +17,7 @@ public class InterfaceInfoPropertyConstants {
 
 	public static final String RFC_FUNCTION_NAME = "RFC_FUNCTION_NAME";
 
-//	public static final String RFC_TABLE_MAPPINGS = "RFC_TABLE_MAPPINGS";
+	public static final String RFC_TABLE_MAPPINGS = "RFC_TABLE_MAPPINGS";
 
 	public static final String RFC_PARAMETER_MAPPINGS = "RFC_PARAMETER_MAPPINGS";
 

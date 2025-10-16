@@ -53,9 +53,8 @@ public class DBPollingAndSend implements BatchModule {
 									targetPath, interfaceInfo.getSndSystemCode(), interfaceInfo.getRcvSystemCode(),
 									callBackPath));
 				})).switchIfEmpty(Mono.fromRunnable(() -> log.info("조회 데이터 없음")))
-//				.doOnError(e -> log.error("오류 발생: {}", e.getMessage(), e))
 				.doFinally(signalType -> log.info("Batch interface end '{}' -> [{}]", interfaceId, transactionId))
-				.subscribe(result -> {}, error -> log.error("오류 발생: {}", error.getMessage(), error));
-//		log.info("Batch interface end '{}' -> [{}]", interfaceId, transactionId);
+				.subscribe(result -> log.debug("result -> {}", result),
+						error -> log.error("오류 발생: {}", error.getMessage(), error));
 	}
 }

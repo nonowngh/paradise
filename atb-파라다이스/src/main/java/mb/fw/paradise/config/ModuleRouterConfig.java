@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.reactive.function.server.HandlerFilterFunction;
+import org.springframework.web.reactive.function.server.RequestPredicates;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -23,7 +24,7 @@ import mb.fw.paradise.util.HttpHeaderUtil;
 
 @Slf4j
 @Configuration
-@ConditionalOnAdaptorType(value = { AdaptorType.INTERFACE_API, AdaptorType.GATEWAY, AdaptorType.RFC_SIMUL }, negate = true)
+@ConditionalOnAdaptorType(value = { AdaptorType.INTERFACE_API, AdaptorType.GATEWAY }, negate = true)
 public class ModuleRouterConfig {
 
 	private final ExceptionService exceptionService;
@@ -37,11 +38,14 @@ public class ModuleRouterConfig {
 	@Bean
 	RouterFunction<ServerResponse> receiveRoutes(DBReceiveProcessHandler dbProcessHandler,
 			RFCCallHandler rfcCallHandler) {
+
+		String rootPath = TargetContextPathConstants.DEFAULT_PATH + "/" + AdaptorConstants.MY_SYSTEM_CODE.toLowerCase();
+
 		return RouterFunctions.route()
-				.POST(TargetContextPathConstants.DEFAULT_PATH + AdaptorConstants.MY_SYSTEM_CODE
-						+ TargetContextPathConstants.RCV_DB_PROCESS, dbProcessHandler::dbProcess)
-				.POST(TargetContextPathConstants.DEFAULT_PATH + AdaptorConstants.MY_SYSTEM_CODE
-						+ TargetContextPathConstants.RCV_RFC_CALL, rfcCallHandler::rfcCall)
+				.nest(RequestPredicates.path(rootPath),
+						builder -> builder.POST(TargetContextPathConstants.RCV_DB_PROCESS, dbProcessHandler::dbProcess)
+								.POST(TargetContextPathConstants.RCV_RFC_CALL, rfcCallHandler::rfcProcess)
+								.POST(TargetContextPathConstants.RCV_RFC_CALL_SYNC, rfcCallHandler::rfcSyncProcess))
 				.build().filter(logRequestAndResponse()).filter(checkAllowInterfaceList())
 				.filter(moduleExceptionHandler());
 	}
@@ -49,32 +53,14 @@ public class ModuleRouterConfig {
 	@Bean
 	RouterFunction<ServerResponse> sendRoutes(DBResultProcessHandler dbResultProcessHandler,
 			ESBAPIServletHandler esbAPIServletHandler) {
-		return RouterFunctions.route()
-				.POST(TargetContextPathConstants.DEFAULT_PATH + AdaptorConstants.MY_SYSTEM_CODE
-						+ TargetContextPathConstants.RESULT_DB_PROCESS, dbResultProcessHandler::dbResultProcess)
-				.POST(TargetContextPathConstants.DEFAULT_PATH + AdaptorConstants.MY_SYSTEM_CODE
-						+ TargetContextPathConstants.SND_COMMON_API, esbAPIServletHandler::callGateway)
-				.build().filter(logRequestAndResponse()).filter(checkAllowInterfaceList())
-				.filter(moduleResultExceptionHandler());
+		String rootPath = TargetContextPathConstants.DEFAULT_PATH + "/" + AdaptorConstants.MY_SYSTEM_CODE.toLowerCase();
+
+		return RouterFunctions.route().nest(RequestPredicates.path(rootPath),
+				builder -> builder
+						.POST(TargetContextPathConstants.RESULT_DB_PROCESS, dbResultProcessHandler::dbResultProcess)
+						.POST(TargetContextPathConstants.SND_COMMON_API, esbAPIServletHandler::callGateway))
+				.build().filter(logRequestAndResponse()).filter(moduleResultExceptionHandler());
 	}
-
-//	@Bean
-//	RouterFunction<ServerResponse> sendAPIRoutes(ESBAPIServletHandler esbAPIServletHandler) {
-//		return RouterFunctions.route()
-//				.POST(TargetContextPathConstants.DEFAULT_PATH + AdaptorConstants.MY_SYSTEM_CODE
-//						+ TargetContextPathConstants.SND_COMMON_API, esbAPIServletHandler::callGateway)
-//				.build().filter(logRequestAndResponse()).filter(moduleResultExceptionHandler());
-//	}
-
-//	private HandlerFilterFunction<ServerResponse, ServerResponse> moduleExceptionHandler() {
-//		return (request, next) -> request.bodyToMono(APIRequestMessage.class).flatMap(dto -> {
-//			request.attributes().put("cachedBody", dto);
-//			return next.handle(request).onErrorResume(e -> {
-//				exceptionService.receiveHandlerExceptionProcess(e, dto);
-//				return ServerResponse.noContent().build();
-//			});
-//		});
-//	}
 
 	private HandlerFilterFunction<ServerResponse, ServerResponse> moduleExceptionHandler() {
 		return (request, next) -> {
@@ -91,7 +77,7 @@ public class ModuleRouterConfig {
 //			HttpHeaders headers = request.headers().asHttpHeaders();
 			return next.handle(request).onErrorResume(e -> {
 				log.error("Error result handler -> ", e);
-				return ServerResponse.noContent().build();
+				return ServerResponse.badRequest().bodyValue(e.getMessage());
 			});
 		};
 	}
@@ -124,4 +110,5 @@ public class ModuleRouterConfig {
 			return next.handle(request);
 		};
 	}
+
 }

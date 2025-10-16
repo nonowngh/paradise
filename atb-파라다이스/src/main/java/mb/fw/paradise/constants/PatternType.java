@@ -9,7 +9,7 @@ public enum PatternType {
 	// DB2RFC
 	DB_RFC("D2R", TargetContextPathConstants.RCV_RFC_CALL),
 	// API2RFC
-	API_RFC("A2R", TargetContextPathConstants.RCV_RFC_CALL),
+	API_RFC("A2R", TargetContextPathConstants.RCV_RFC_CALL_SYNC),
 	// RFC2DB(배치)
 	RFCBATCH_DB("RB2B", TargetContextPathConstants.RCV_DB_PROCESS),
 	// RFC2DB(서버)

@@ -11,6 +11,7 @@ import com.sap.conn.jco.JCoParameterList;
 
 import lombok.extern.slf4j.Slf4j;
 import mb.fw.paradise.api.model.InterfaceInfo;
+import mb.fw.paradise.api.model.PatternProperty;
 import mb.fw.paradise.config.annotaion.ConditionalOnAdaptorType;
 import mb.fw.paradise.constants.AdaptorType;
 import mb.fw.paradise.constants.ESBStatusConstants;
@@ -34,12 +35,12 @@ public class RFCModuleService {
 		this.jcoDestination = jcoDestination;
 	}
 
-	public Mono<APIResponseMessage> rfcProcess(InterfaceInfo interfaceInfo, APIRequestMessage request) {
+	public Mono<APIResponseMessage> rfcCallAndResponse(InterfaceInfo interfaceInfo, APIRequestMessage request) {
 		return Mono.fromCallable(() -> {
-			String functionName = InterfaceInfoPropertyUtil.getValue(new ArrayList<>(interfaceInfo.getPropertyList()),
+			List<PatternProperty> propertyList = new ArrayList<>(interfaceInfo.getPropertyList());
+			String functionName = InterfaceInfoPropertyUtil.getValue(propertyList,
 					InterfaceInfoPropertyConstants.RFC_FUNCTION_NAME);
-			List<String> exportTableList = InterfaceInfoPropertyUtil.getValueList(
-					new ArrayList<>(interfaceInfo.getPropertyList()),
+			List<String> exportTableList = InterfaceInfoPropertyUtil.getValueList(propertyList,
 					InterfaceInfoPropertyConstants.RFC_EXPORT_TABLE_NAMES);
 			JCoFunction function = jcoDestination.getRepository().getFunction(functionName);
 			if (function == null)
@@ -47,12 +48,11 @@ public class RFCModuleService {
 			JCoParameterList paramList = function.getImportParameterList();
 			JCoParameterList tableParamList = function.getTableParameterList();
 			DataItem dataItem = request.getDataItem();
-			JcoExecutor.importParms(dataItem.getParameter(), paramList);
-			JcoExecutor.importTables(dataItem.getTable(), tableParamList);
+			JcoExecutor.importParms(dataItem.getParameter(), paramList, propertyList);
+			JcoExecutor.importTables(dataItem.getTable(), tableParamList, propertyList);
 			log.info("call function : {}", function.getName());
 			function.execute(jcoDestination);
-			DataItem ResultItem = JcoExecutor.exportData(function.getExportParameterList(), tableParamList,
-					exportTableList);
+			DataItem ResultItem = JcoExecutor.exportData(function.getExportParameterList(), tableParamList, exportTableList);
 //			int resultCount = JcoExecutor.getResultCount(); 이거 만들어서 reponse DataCount에 넣기
 			return APIResponseMessage.builder().statusCode(ESBStatusConstants.SUCCESS)
 					.interfaceId(request.getInterfaceId()).transactionId(request.getTransactionId())

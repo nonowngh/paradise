@@ -4,8 +4,10 @@ import java.util.List;
 
 import javax.annotation.PostConstruct;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -24,8 +26,14 @@ public class ModuleConfig {
 	// 해당 어댑터 시스템 코드
 	private String systemCode;
 
+	@Autowired
+	private Environment env;
+
 	@PostConstruct
 	public void init() {
+		String adaptorType = env.getProperty("adaptor.type");
+		if (adaptorType != null)
+			log.info("adaptor-type : [{}]", adaptorType);
 		if (batchTask != null && !batchTask.isEmpty())
 			log.info("Setting property batch-task : {}", batchTask);
 		if (interfaceList != null && !interfaceList.isEmpty())

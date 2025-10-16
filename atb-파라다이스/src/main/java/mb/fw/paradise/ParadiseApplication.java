@@ -19,12 +19,12 @@ import mb.fw.atb.util.MDCLogging;
 @ComponentScan(basePackages = { "mb.fw.paradise", "mb.fw.adaptor" })
 public class ParadiseApplication {
 	public static void main(String[] args) throws Exception {
-//		System.setProperty("javax.xml.parsers.DocumentBuilderFactory",
-//				"com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl");
-//		AdaptorStarter.init();
-//		String adaptorName = AdaptorConfig.getInstance().getAdaptorName();
-//		log.info("adaptorName: {}", adaptorName);
-//		MDCLogging.create("NONE", "NONE", adaptorName);
+		System.setProperty("javax.xml.parsers.DocumentBuilderFactory",
+				"com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl");
+		AdaptorStarter.init();
+		String adaptorName = AdaptorConfig.getInstance().getAdaptorName();
+		log.info("adaptorName: {}", adaptorName);
+		MDCLogging.create("NONE", "NONE", adaptorName);
 		SpringApplication.run(ParadiseApplication.class, args);
 	}
 }

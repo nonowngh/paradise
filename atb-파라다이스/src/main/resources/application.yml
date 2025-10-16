@@ -1,31 +1,36 @@
 server:
-  port: 29011
-
+  port: 29000
 
 adaptor:
-  type: RFC_SIMUL
-
-#sap:
-#  connection:
-#    destination-name: indigoJco
-#    ashost: 127.0.0.1
-#    r3name: 00
-#    msserv: 9090
-#    client: indigo
-#    user: indigo
-#    passwd: meta1234!
-#    lang: ko
-#    group: indigo
-#    trace: 00
-#    sysnr: 01    
+  type: GATEWAY
 
 spring:
+  cloud:
+    gateway:
+      routes:
+        - id: SAP-RFC-RECV
+          uri: http://localhost:8090   # 대상 서비스 URI
+          predicates:
+            - Path=/esb/api/gateway/sap/*   # 요청 경로 조건
+          filters:
+            - name : CommonRewritePath
+#        - id: SAP-RFC-CALL-SYNC
+#          uri: http://localhost:8090   # 대상 서비스 URI
+#          predicates:
+#            - Path=/esb/api/gateway/sap/rfc-call-sync   # 요청 경로 조건
+#          filters:
+#            - name : CommonRewritePath					
+        - id: PCB-DB-PROCESS
+          uri: http://localhost:8081   # 대상 서비스 URI
+          predicates:
+            - Path=/esb/api/gateway/pcb/db-process   # 요청 경로 조건
+          filters:
+            - name : CommonRewritePath
   main:
     web-application-type: reactive
     allow-bean-definition-overriding: true
   autoconfigure:
     exclude:
-      - org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration
-      - org.springframework.boot.autoconfigure.quartz.QuartzAutoConfiguration
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
-      
+      - org.springframework.boot.autoconfigure.quartz.QuartzAutoConfiguration
+      - org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration

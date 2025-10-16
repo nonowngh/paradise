@@ -26,6 +26,12 @@ public class InterfaceInfoPropertyUtil {
 
 	public static String getValue(List<PatternProperty> propertyList, String propertyName) {
 		return propertyList.stream().filter(p -> propertyName.equals(p.getPropertyName()))
-				.map(PatternProperty::getPropertyValue).findFirst().orElseThrow(() -> new IllegalArgumentException("No value found for property: " + propertyName));
+				.map(PatternProperty::getPropertyValue).findFirst()
+				.orElseThrow(() -> new IllegalArgumentException("No value found for property: " + propertyName));
+	}
+
+	public static boolean existProperty(List<PatternProperty> propertyList, String propertyName) {
+		return propertyList.stream().filter(p -> propertyName.equals(p.getPropertyName()))
+				.map(PatternProperty::getPropertyValue).findAny().isPresent();
 	}
 }
