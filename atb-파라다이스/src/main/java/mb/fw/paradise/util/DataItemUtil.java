@@ -14,7 +14,12 @@ public class DataItemUtil {
 			return 1;
 		}
 		LinkedHashMap<String, List<Map<String, Object>>> table = resultItem.getTable();
-		return table.values().stream().filter(Objects::nonNull).mapToInt(List::size).sum();
+		int count = table.values().stream().filter(Objects::nonNull).mapToInt(List::size).sum();
+		return count == 0 ? 1 : count;
 	}
 
+	public static void main(String[] args) {
+		LinkedHashMap<String, List<Map<String, Object>>> table = new LinkedHashMap<>();
+		System.out.println(tableDataCount(DataItem.builder().table(table).build()));
+	}
 }
