@@ -14,7 +14,7 @@ public class DataItemUtil {
 			return 1;
 		}
 		LinkedHashMap<String, List<Map<String, Object>>> table = resultItem.getTable();
-		return table.values().stream().filter(Objects::nonNull).mapToInt(List::size).sum() + 1;
+		return table.values().stream().filter(Objects::nonNull).mapToInt(List::size).sum();
 	}
 
 }
