@@ -30,5 +30,4 @@ public class MyBatisConfig {
     SqlSessionTemplate batchSqlSessionTemplate(SqlSessionFactory sqlSessionFactory) {
         return new SqlSessionTemplate(sqlSessionFactory, ExecutorType.BATCH);
     }
-    
 }

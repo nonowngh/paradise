@@ -9,6 +9,8 @@ public class TargetContextPathConstants {
 
     public static final String RCV_DB_PROCESS = "/rcv-db-process";
 
+    public static final String RCV_DB_PROCESS_SYNC = "/rcv-db-process-sync";
+    
     public static final String RCV_RFC_CALL = "/rcv-rfc-call";
     
     public static final String RCV_RFC_CALL_SYNC = "/rcv-rfc-call-sync";

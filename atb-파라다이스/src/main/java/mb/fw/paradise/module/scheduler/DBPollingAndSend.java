@@ -12,6 +12,7 @@ import mb.fw.paradise.dto.APIRequestMessage;
 import mb.fw.paradise.module.BatchModule;
 import mb.fw.paradise.module.service.DBModuleService;
 import mb.fw.paradise.service.APIService;
+import mb.fw.paradise.util.DataItemUtil;
 import mb.fw.paradise.util.TransactionGenerator;
 import reactor.core.publisher.Mono;
 
@@ -49,7 +50,7 @@ public class DBPollingAndSend implements BatchModule {
 					return dbModuleService.getSendData(interfaceInfo, transactionId)
 							.flatMap(dataItem -> apiService.callGateway(
 									APIRequestMessage.builder().interfaceId(interfaceId).transactionId(transactionId)
-											.dataItem(dataItem).totalDataCount(updateCount).build(),
+											.dataItem(dataItem).totalDataCount(DataItemUtil.tableDataCount(dataItem)).build(),
 									targetPath, interfaceInfo.getSndSystemCode(), interfaceInfo.getRcvSystemCode(),
 									callBackPath));
 				})).switchIfEmpty(Mono.fromRunnable(() -> log.info("조회 데이터 없음")))

@@ -44,6 +44,7 @@ public class ModuleRouterConfig {
 		return RouterFunctions.route()
 				.nest(RequestPredicates.path(rootPath),
 						builder -> builder.POST(TargetContextPathConstants.RCV_DB_PROCESS, dbProcessHandler::dbProcess)
+								.POST(TargetContextPathConstants.RCV_DB_PROCESS_SYNC, dbProcessHandler::dbSyncProcess)
 								.POST(TargetContextPathConstants.RCV_RFC_CALL, rfcCallHandler::rfcProcess)
 								.POST(TargetContextPathConstants.RCV_RFC_CALL_SYNC, rfcCallHandler::rfcSyncProcess))
 				.build().filter(logRequestAndResponse()).filter(checkAllowInterfaceList())

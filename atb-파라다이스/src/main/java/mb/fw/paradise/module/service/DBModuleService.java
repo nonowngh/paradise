@@ -24,6 +24,7 @@ import mb.fw.paradise.dto.APIResponseMessage;
 import mb.fw.paradise.dto.DataItem;
 import mb.fw.paradise.module.service.sqlexecutor.ReceiveQueryExecutor;
 import mb.fw.paradise.module.service.sqlexecutor.SendQueryExecutor;
+import mb.fw.paradise.util.DataItemUtil;
 import mb.fw.paradise.util.InterfaceInfoPropertyUtil;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -38,33 +39,9 @@ public class DBModuleService {
 	@Autowired
 	private SendQueryExecutor sendQueryExecutor;
 
-	@Transactional
 	public Mono<APIResponseMessage> dbProcessAndResponse(InterfaceInfo interfaceInfo, APIRequestMessage request) {
-		return Mono.fromCallable(() -> {
-			String workType = InterfaceInfoPropertyUtil.getValue(new ArrayList<>(interfaceInfo.getPropertyList()),
-					InterfaceInfoPropertyConstants.DB_WORK_TYPE);
-			for (char ch : workType.toCharArray()) {
-				switch (ch) {
-				case 'D':
-					receiveQueryExecutor.processDelete(interfaceInfo, request);
-					break;
-				case 'I':
-					receiveQueryExecutor.processInsert(interfaceInfo, request);
-					break;
-//				case 'U':
-//					receiveQueryExecutor.processUpdateQueries(interfaceInfo, request);
-//					break;
-//				case 'P':
-//					receiveQueryExecutor.processProcedureQueries(interfaceInfo, request);
-//					break;
-				default:
-					throw new IllegalArgumentException("Invalid 'workType' : " + ch);
-				}
-			}
-			return APIResponseMessage.builder().statusCode(ESBStatusConstants.SUCCESS)
-					.interfaceId(request.getInterfaceId()).transactionId(request.getTransactionId())
-					.totalDataCount(request.getTotalDataCount()).build();
-		}).subscribeOn(Schedulers.boundedElastic()) // 블로킹 작업 안전 처리
+		return Mono.fromCallable(() -> transactionalProcess(interfaceInfo, request))
+				.subscribeOn(Schedulers.boundedElastic()) // 블로킹 작업 안전 처리
 				.onErrorResume(e -> {
 					return Mono.error(new RuntimeException("DB 처리 실패: " + e.getMessage(), e));
 				});
@@ -117,6 +94,39 @@ public class DBModuleService {
 					.table(sendQueryExecutor.getTableData(sendTableNameList, recvTableNameList, queryList, params))
 					.build();
 		}).subscribeOn(Schedulers.boundedElastic());
+	}
+
+	@Transactional
+	private APIResponseMessage transactionalProcess(InterfaceInfo interfaceInfo, APIRequestMessage request) {
+		String workType = InterfaceInfoPropertyUtil.getValue(new ArrayList<>(interfaceInfo.getPropertyList()),
+				InterfaceInfoPropertyConstants.DB_WORK_TYPE);
+		APIResponseMessage response = APIResponseMessage.builder().statusCode(ESBStatusConstants.SUCCESS)
+				.interfaceId(request.getInterfaceId()).transactionId(request.getTransactionId())
+				.totalDataCount(request.getTotalDataCount()).build();
+		for (char ch : workType.toCharArray()) {
+			switch (ch) {
+			case 'D':
+				receiveQueryExecutor.processDelete(interfaceInfo, request);
+				break;
+			case 'I':
+				receiveQueryExecutor.processInsert(interfaceInfo, request);
+				break;
+//				case 'U':
+//					receiveQueryExecutor.processUpdateQueries(interfaceInfo, request);
+//					break;
+//				case 'P':
+//					receiveQueryExecutor.processProcedureQueries(interfaceInfo, request);
+//					break;
+			case 'S':
+				DataItem resultItem = receiveQueryExecutor.processSelect(interfaceInfo, request);
+				response.setResultItem(resultItem);
+				response.setTotalDataCount(DataItemUtil.tableDataCount(resultItem));
+				break;
+			default:
+				throw new IllegalArgumentException("Invalid 'workType' : " + ch);
+			}
+		}
+		return response;
 	}
 
 }

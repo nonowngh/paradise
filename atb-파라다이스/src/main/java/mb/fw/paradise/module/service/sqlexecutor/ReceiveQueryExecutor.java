@@ -12,12 +12,16 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import mb.fw.paradise.api.model.InterfaceInfo;
+import mb.fw.paradise.api.model.PatternProperty;
 import mb.fw.paradise.api.model.SqlQuery;
 import mb.fw.paradise.config.MyBatisConfig;
 import mb.fw.paradise.config.annotaion.ConditionalOnAdaptorType;
 import mb.fw.paradise.constants.AdaptorType;
+import mb.fw.paradise.constants.InterfaceInfoPropertyConstants;
 import mb.fw.paradise.constants.SQLConstants;
 import mb.fw.paradise.dto.APIRequestMessage;
+import mb.fw.paradise.dto.DataItem;
+import mb.fw.paradise.util.InterfaceInfoPropertyUtil;
 
 @Service
 @ConditionalOnAdaptorType(AdaptorType.DB)
@@ -63,6 +67,31 @@ public class ReceiveQueryExecutor {
 				}
 			});
 		});
+	}
+	
+	public DataItem processSelect(InterfaceInfo interfaceInfo, APIRequestMessage request) {
+		List<SqlQuery> queryList = new ArrayList<>(interfaceInfo.getSqlQueryList());
+		LinkedHashMap<String, Object> param = request.getDataItem().getParameter();
+		List<PatternProperty> propertyList = new ArrayList<>(interfaceInfo.getPropertyList());
+		LinkedHashMap<String, List<Map<String, Object>>> tableMap = new LinkedHashMap<>();
+		if(InterfaceInfoPropertyUtil.existProperty(propertyList, InterfaceInfoPropertyConstants.RECV_TABLE_NAMES)) {
+			List<String> tableNameList = InterfaceInfoPropertyUtil.getValueList(new ArrayList<>(interfaceInfo.getPropertyList()),
+					InterfaceInfoPropertyConstants.RECV_TABLE_NAMES);
+			tableNameList.forEach(tableName -> {
+				String expectedSqlId = SQLConstants.SQL_ID_SELECT + "." + tableName;
+				queryList.stream().filter(q -> expectedSqlId.equals(q.getSqlId())).findFirst().ifPresent(query -> {
+					List<Map<String, Object>> dataList = simpleSqlSessionTemplate.selectList(query.getQuery(), param);
+					tableMap.put(tableName, dataList);
+				});
+			});
+		}else {
+			String expectedSqlId = SQLConstants.SQL_ID_SELECT;
+			queryList.stream().filter(q -> expectedSqlId.equals(q.getSqlId())).findFirst().ifPresent(query -> {
+				List<Map<String, Object>> dataList = simpleSqlSessionTemplate.selectList(query.getQuery(), param);
+				tableMap.put("data", dataList);
+			});
+		}
+		return DataItem.builder().table(tableMap).build();
 	}
 
 	private void insertSimple(String queryId, List<Map<String, Object>> dataList) {

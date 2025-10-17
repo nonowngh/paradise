@@ -20,6 +20,7 @@ import mb.fw.paradise.dto.APIRequestMessage;
 import mb.fw.paradise.dto.APIResponseMessage;
 import mb.fw.paradise.dto.DataItem;
 import mb.fw.paradise.module.service.sqlexecutor.JcoExecutor;
+import mb.fw.paradise.util.DataItemUtil;
 import mb.fw.paradise.util.InterfaceInfoPropertyUtil;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -52,15 +53,16 @@ public class RFCModuleService {
 			JcoExecutor.importTables(dataItem.getTable(), tableParamList, propertyList);
 			log.info("call function : {}", function.getName());
 			function.execute(jcoDestination);
-			DataItem ResultItem = JcoExecutor.exportData(function.getExportParameterList(), tableParamList, exportTableList);
-//			int resultCount = JcoExecutor.getResultCount(); 이거 만들어서 reponse DataCount에 넣기
+			DataItem resultItem = JcoExecutor.exportData(function.getExportParameterList(), tableParamList,
+					exportTableList);
 			return APIResponseMessage.builder().statusCode(ESBStatusConstants.SUCCESS)
 					.interfaceId(request.getInterfaceId()).transactionId(request.getTransactionId())
-					.totalDataCount(request.getTotalDataCount()).resultItem(ResultItem).build();
+					.totalDataCount(DataItemUtil.tableDataCount(resultItem)).resultItem(resultItem).build();
 		}).subscribeOn(Schedulers.boundedElastic()) // 블로킹 작업 안전 처리
 				.onErrorResume(e -> {
 					return Mono.error(new RuntimeException("RFC 처리 실패: " + e.getMessage(), e));
 				});
 
 	}
+
 }
