@@ -3,7 +3,7 @@ package mb.fw.paradise.util;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
-import mb.fw.paradise.constants.ESBAPIHeaderConstants;
+import mb.fw.paradise.constants.ESBApiHeaderConstants;
 import mb.fw.paradise.constants.ESBStatusConstants;
 
 public class HttpHeaderUtil {
@@ -29,11 +29,11 @@ public class HttpHeaderUtil {
 				responseBuilder.header(key, value);
 			}
 		});
-		responseBuilder.header(ESBAPIHeaderConstants.ESB_STATUS_CODE, statusCode);
-		responseBuilder.header(ESBAPIHeaderConstants.ESB_STATUS_MESSAGE, statusMessage);
-		responseBuilder.header(ESBAPIHeaderConstants.ERROR_COUNT,
+		responseBuilder.header(ESBApiHeaderConstants.ESB_STATUS_CODE, statusCode);
+		responseBuilder.header(ESBApiHeaderConstants.ESB_STATUS_MESSAGE, statusMessage);
+		responseBuilder.header(ESBApiHeaderConstants.ERROR_COUNT,
 				statusCode == ESBStatusConstants.SUCCESS ? String.valueOf(0)
-						: getHeader(requestHeader, ESBAPIHeaderConstants.TOTAL_COUNT));
+						: getHeader(requestHeader, ESBApiHeaderConstants.TOTAL_COUNT));
 		return responseBuilder;
 	}
 }

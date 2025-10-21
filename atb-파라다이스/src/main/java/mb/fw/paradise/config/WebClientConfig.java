@@ -8,7 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import lombok.Setter;
-import mb.fw.paradise.constants.APIContextPathConstants;
+import mb.fw.paradise.constants.ApiContextPathConstants;
 
 @Configuration
 @ConfigurationProperties(prefix = "web.client", ignoreUnknownFields = true)
@@ -22,13 +22,13 @@ public class WebClientConfig {
 
 	@Bean(name = "interfaceInfoWebClient")
 	WebClient interfaceInfoWebClient() {
-		return WebClient.builder().baseUrl(interfaceInfoUrl + APIContextPathConstants.INTERFACE_INFO_API)
+		return WebClient.builder().baseUrl(interfaceInfoUrl + ApiContextPathConstants.INTERFACE_INFO_API)
 				.defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE).build();
 	}
 
 	@Bean(name = "gatewayWebClient")
 	WebClient gatewayWebClient() {
-		return WebClient.builder().baseUrl(gatewayUrl + APIContextPathConstants.GATEWAY)
+		return WebClient.builder().baseUrl(gatewayUrl + ApiContextPathConstants.GATEWAY)
 				.defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE).build();
 	}
 }

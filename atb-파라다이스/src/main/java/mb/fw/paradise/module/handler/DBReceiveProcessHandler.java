@@ -7,7 +7,7 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
 import lombok.extern.slf4j.Slf4j;
-import mb.fw.paradise.constants.ESBAPIHeaderConstants;
+import mb.fw.paradise.constants.ESBApiHeaderConstants;
 import mb.fw.paradise.constants.ESBStatusConstants;
 import mb.fw.paradise.dto.APIRequestMessage;
 import mb.fw.paradise.dto.APIResponseMessage;
@@ -31,7 +31,7 @@ public class DBReceiveProcessHandler {
 
 	public Mono<ServerResponse> dbProcess(ServerRequest serverRequest) {
 		String callBackPath = HttpHeaderUtil.getHeader(serverRequest.headers().asHttpHeaders(),
-				ESBAPIHeaderConstants.CALL_BACK_PATH);
+				ESBApiHeaderConstants.CALL_BACK_PATH);
 		return serverRequest.bodyToMono(APIRequestMessage.class)
 				.switchIfEmpty(Mono.error(new IllegalArgumentException("요청 body가 존재하지 않습니다."))) // body 없을 때 에러 처리
 				.flatMap(request -> apiService.getInterfaceInfo(request.getInterfaceId())
@@ -56,11 +56,11 @@ public class DBReceiveProcessHandler {
 					return HttpHeaderUtil
 							.makeDefaultResponseHeader(requestHeader, ESBStatusConstants.FAIL, error.getMessage())
 							.bodyValue(APIResponseMessage.builder()
-									.interfaceId(HttpHeaderUtil.getHeader(requestHeader, ESBAPIHeaderConstants.INTERFACE_ID))
-									.transactionId(HttpHeaderUtil.getHeader(requestHeader, ESBAPIHeaderConstants.TRANSACTION_ID))
-									.totalDataCount(HttpHeaderUtil.getIntHeader(requestHeader, ESBAPIHeaderConstants.TOTAL_COUNT))
-									.errorDataCount(HttpHeaderUtil.getIntHeader(requestHeader, ESBAPIHeaderConstants.TOTAL_COUNT))
-									.statusCode(ESBStatusConstants.FAIL).statusCode(error.getMessage()).build());
+									.interfaceId(HttpHeaderUtil.getHeader(requestHeader, ESBApiHeaderConstants.INTERFACE_ID))
+									.transactionId(HttpHeaderUtil.getHeader(requestHeader, ESBApiHeaderConstants.TRANSACTION_ID))
+									.totalDataCount(HttpHeaderUtil.getIntHeader(requestHeader, ESBApiHeaderConstants.TOTAL_COUNT))
+									.errorDataCount(HttpHeaderUtil.getIntHeader(requestHeader, ESBApiHeaderConstants.TOTAL_COUNT))
+									.statusCode(ESBStatusConstants.FAIL).statusMessage(error.getMessage()).build());
 				});
 	}
 }

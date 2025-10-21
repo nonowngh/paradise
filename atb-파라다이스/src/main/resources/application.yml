@@ -1,17 +1,15 @@
 server:
-  port: 29013
+  port: 29100
 
 web:
   client:
-    interface-info-url: http://127.0.0.1:8090
-    gateway-url: http://127.0.0.1:28000
+    interface-info-url: http://127.0.0.1:29010
+    gateway-url: http://127.0.0.1:29000
 
 adaptor:
   type: DB
   module-config:
-    system-code: EAS
-    interface-list:
-      - IF_UAS_CB_TRS_002
+    system-code: COM
 
 spring:
   main:

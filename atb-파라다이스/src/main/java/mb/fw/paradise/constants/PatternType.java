@@ -19,7 +19,7 @@ public enum PatternType {
 	// DB2DB
 	DB_DB("D2D", TargetContextPathConstants.RCV_DB_PROCESS),
 	// API2DB
-	API_DB("A2D", TargetContextPathConstants.RCV_DB_PROCESS),
+	API_DB("A2D", TargetContextPathConstants.RCV_DB_PROCESS_SYNC),
 	// API(DB)2DB
 	APIDB_DB("AD2D", TargetContextPathConstants.RCV_DB_PROCESS),
 	// API(DB)2RFC

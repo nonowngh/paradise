@@ -21,7 +21,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import lombok.extern.slf4j.Slf4j;
 import mb.fw.paradise.api.model.InterfaceInfo;
 import mb.fw.paradise.config.ModuleConfig;
-import mb.fw.paradise.constants.APIContextPathConstants;
+import mb.fw.paradise.constants.ApiContextPathConstants;
 import mb.fw.paradise.service.job.DynamicQuartzJob;
 
 @Slf4j
@@ -45,7 +45,7 @@ public class QuartzSchedulerService {
 			return;
 		try {
 			List<InterfaceInfo> cronScheduleInfoList = interfaceInfoWebClient.post()
-					.uri(APIContextPathConstants.INTERFACE_INFO_API_SCHEDULE_LIST).bodyValue(config.getInterfaceList())
+					.uri(ApiContextPathConstants.INTERFACE_INFO_API_SCHEDULE_LIST).bodyValue(config.getInterfaceList())
 					.retrieve().bodyToMono(new ParameterizedTypeReference<List<InterfaceInfo>>() {
 					}).block(); // ← 동기 호출;
 

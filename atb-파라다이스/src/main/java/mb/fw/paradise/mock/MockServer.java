@@ -17,7 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 import mb.fw.paradise.api.model.InterfaceInfo;
-import mb.fw.paradise.constants.APIContextPathConstants;
+import mb.fw.paradise.constants.ApiContextPathConstants;
 
 @Profile("local")
 @Component
@@ -34,7 +34,7 @@ public class MockServer {
 		info.setInterfaceId("IF_UAS_CB_TRS_002");
 		info.setCronExpression("0/10 * * * * ?");
 		infoList.add(info);
-		mockServer.when(HttpRequest.request().withMethod("POST").withPath(APIContextPathConstants.INTERFACE_INFO_API + APIContextPathConstants.INTERFACE_INFO_API_SCHEDULE_LIST))
+		mockServer.when(HttpRequest.request().withMethod("POST").withPath(ApiContextPathConstants.INTERFACE_INFO_API + ApiContextPathConstants.INTERFACE_INFO_API_SCHEDULE_LIST))
 				.respond(HttpResponse.response().withStatusCode(200).withHeader("Content-Type", "application/json").withBody(
 						new ObjectMapper().writeValueAsString(infoList)));
 	}

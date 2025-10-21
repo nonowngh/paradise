@@ -13,14 +13,14 @@ import org.springframework.web.bind.annotation.RestController;
 import mb.fw.paradise.api.model.InterfaceInfo;
 import mb.fw.paradise.api.service.InterfaceInfoService;
 import mb.fw.paradise.config.annotaion.ConditionalOnAdaptorType;
-import mb.fw.paradise.constants.APIContextPathConstants;
+import mb.fw.paradise.constants.ApiContextPathConstants;
 import mb.fw.paradise.constants.AdaptorType;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 @RestController
 @ConditionalOnAdaptorType(AdaptorType.INTERFACE_API)
-@RequestMapping(APIContextPathConstants.INTERFACE_INFO_API)
+@RequestMapping(ApiContextPathConstants.INTERFACE_INFO_API)
 public class InterfaceInfoController {
 
 	private final InterfaceInfoService interfaceInfoService;
@@ -39,13 +39,13 @@ public class InterfaceInfoController {
 	    });
 	}
 
-	@GetMapping(APIContextPathConstants.INTERFACE_INFO_API_CLEAR_CACHE)
+	@GetMapping(ApiContextPathConstants.INTERFACE_INFO_API_CLEAR_CACHE)
 	public Mono<ResponseEntity<String>> clearCacheInterfaceInfo() {
 		return Mono.fromRunnable(() -> interfaceInfoService.clearAllInfoCache())
 				.subscribeOn(Schedulers.boundedElastic()).thenReturn(ResponseEntity.ok("Cache successfully cleared"));
 	}
 
-	@PostMapping(APIContextPathConstants.INTERFACE_INFO_API_SCHEDULE_LIST)
+	@PostMapping(ApiContextPathConstants.INTERFACE_INFO_API_SCHEDULE_LIST)
 	public Mono<List<InterfaceInfo>> getInterfaceScheduleList(@RequestBody List<String> interfaceIdList) {
 		return interfaceInfoService.getScheduleList(interfaceIdList);
 	}

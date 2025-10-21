@@ -1,7 +1,7 @@
 package mb.fw.paradise.constants;
 
-public class ESBAPIHeaderConstants {
-	private ESBAPIHeaderConstants() {
+public class ESBApiHeaderConstants {
+	private ESBApiHeaderConstants() {
 	}
 
 	public static final String INTERFACE_ID = "X-Interface-Id";
@@ -13,6 +13,7 @@ public class ESBAPIHeaderConstants {
 	public static final String TOTAL_COUNT = "X-Total-Count";
 	public static final String ERROR_COUNT = "X-Error-Count";
 	public static final String CALL_BACK_PATH = "X-Call-Back-Path";
-	public static final String CALL_SYNC = "X-Call-Sync";
+//	public static final String CALL_SYNC = "X-Call-Sync";
+	public static final String API_MESSAGE_TYPE = "X-Api-Message-Type";
 
 }

@@ -13,7 +13,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 
 import lombok.extern.slf4j.Slf4j;
-import mb.fw.paradise.constants.ESBAPIHeaderConstants;
+import mb.fw.paradise.constants.ApiMessageType;
+import mb.fw.paradise.constants.ESBApiHeaderConstants;
 import mb.fw.paradise.constants.ESBStatusConstants;
 import mb.fw.paradise.service.LoggingService;
 import mb.fw.paradise.util.HttpHeaderUtil;
@@ -40,21 +41,24 @@ public class GatewayLoggingFilter implements GlobalFilter {
 
 		ServerHttpRequest request = exchange.getRequest();
 		HttpHeaders headers = request.getHeaders();
-		headers.forEach((key, valueList) -> {
-			String joinedValues = String.join(",", valueList);
-			log.debug("http header info -> {} : {}", key, joinedValues);
-		});
+//		headers.forEach((key, valueList) -> {
+//			String joinedValues = String.join(",", valueList);
+//		});
+		log.debug("http header info -> {}", headers.toString());
 
 		// 필요한 헤더 추출
-		String interfaceId = HttpHeaderUtil.getHeader(headers, ESBAPIHeaderConstants.INTERFACE_ID);
-		String transactionId = HttpHeaderUtil.getHeader(headers, ESBAPIHeaderConstants.TRANSACTION_ID);
-		String sendSystemCode = HttpHeaderUtil.getHeader(headers, ESBAPIHeaderConstants.SEND_SYSTEM_CODE);
-		String receiveSystemCode = HttpHeaderUtil.getHeader(headers, ESBAPIHeaderConstants.RECEIVE_SYSTEM_CODE);
-		String esbStatusCode = HttpHeaderUtil.getHeader(headers, ESBAPIHeaderConstants.ESB_STATUS_CODE);
-		String esbStatusMessage = HttpHeaderUtil.getHeader(headers, ESBAPIHeaderConstants.ESB_STATUS_MESSAGE);
-		int totalCount = HttpHeaderUtil.getIntHeader(headers, ESBAPIHeaderConstants.TOTAL_COUNT);
-		int errorCount = HttpHeaderUtil.getIntHeader(headers, ESBAPIHeaderConstants.ERROR_COUNT);
-		String callBackPath = HttpHeaderUtil.getHeader(headers, ESBAPIHeaderConstants.CALL_BACK_PATH);
+		String interfaceId = HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.INTERFACE_ID);
+		String transactionId = HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.TRANSACTION_ID);
+		String sendSystemCode = HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.SEND_SYSTEM_CODE);
+		String receiveSystemCode = HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.RECEIVE_SYSTEM_CODE);
+		String esbStatusCode = HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.ESB_STATUS_CODE);
+		String esbStatusMessage = HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.ESB_STATUS_MESSAGE);
+		int totalCount = HttpHeaderUtil.getIntHeader(headers, ESBApiHeaderConstants.TOTAL_COUNT) == 0 ? 1
+				: HttpHeaderUtil.getIntHeader(headers, ESBApiHeaderConstants.TOTAL_COUNT);
+		int errorCount = HttpHeaderUtil.getIntHeader(headers, ESBApiHeaderConstants.ERROR_COUNT);
+		String callBackPath = HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.CALL_BACK_PATH);
+		ApiMessageType apiMessagType = ApiMessageType
+				.valueOf(HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.API_MESSAGE_TYPE));
 
 		// 후처리에 필요한 정보 저장
 		exchange.getAttributes().put("interfaceId", interfaceId);
@@ -66,39 +70,48 @@ public class GatewayLoggingFilter implements GlobalFilter {
 		exchange.getAttributes().put("totalCount", totalCount);
 		exchange.getAttributes().put("errorCount", errorCount);
 		exchange.getAttributes().put("callBackPath", callBackPath);
+		exchange.getAttributes().put("apiMessagType", apiMessagType);
 
 		// 동기 인터페이스 경우, 요청시에도 로깅 jms 송신
-		if (!HttpHeaderUtil.getHeader(headers, ESBAPIHeaderConstants.CALL_SYNC).isEmpty()) {
-			processByHeaders(exchange, null);
+		if (apiMessagType.equals(ApiMessageType.SYNC)) {
+			processByHeaders(exchange, null, true);
 		}
 
-		return chain.filter(exchange).doFinally(signalType -> {
+		return chain.filter(exchange).doOnError(throwable -> {
+			exchange.getAttributes().put("gateway_exception_message", throwable.getCause().getMessage());
+		}).doFinally(signalType -> {
 			HttpStatus statusCode = exchange.getResponse().getStatusCode();
 			log.info("[GatewayFilter] Response Status Code: {}", statusCode);
-
+			String resultStatusCode = (String) exchange.getAttribute("esbStatusCode");
+			String resultStatusMessage = (String) exchange.getAttribute("esbStatusMessage");
 			if (statusCode != null && !statusCode.is2xxSuccessful()) {
 				log.warn("[gateway-logging-filter] Non-200 Response Detected: {}", statusCode);
-				String errorMessage = "요청 처리 오류 : [" + statusCode + "] " + statusCode.getReasonPhrase();
-				processByHeaders(exchange, errorMessage);
+				String errorMessage = "요청 처리 오류 : [" + statusCode + "] "
+						+ exchange.getAttribute("gateway_exception_message");
+				if (ESBStatusConstants.FAIL.equals(resultStatusCode) && !resultStatusMessage.isEmpty()) {
+					errorMessage = "요청 처리 오류 : [" + statusCode + "] " + resultStatusMessage;
+				}
+				processByHeaders(exchange, errorMessage, false);
 			} else {
-				processByHeaders(exchange, null);
+				processByHeaders(exchange, null, false);
 			}
 		});
 
 	}
 
-	private void processByHeaders(ServerWebExchange exchange, String errorMessage) {
+	private void processByHeaders(ServerWebExchange exchange, String errorMessage, boolean isSyncRequest) {
 		String interfaceId = (String) exchange.getAttribute("interfaceId");
 		String transactionId = (String) exchange.getAttribute("transactionId");
 		String sendSystemCode = (String) exchange.getAttribute("sendSystemCode");
 		String receiveSystemCode = (String) exchange.getAttribute("receiveSystemCode");
 		String esbStatusCode = (String) exchange.getAttribute("esbStatusCode");
 		String esbStatusMessage = (String) exchange.getAttribute("esbStatusMessage");
-		int totalCount = Integer.valueOf(exchange.getAttribute("totalCount"));
-		int errorCount = Integer.valueOf(exchange.getAttribute("errorCount"));
+		int totalCount = exchange.getAttribute("totalCount");
+		int errorCount = exchange.getAttribute("errorCount");
+		ApiMessageType apiMessagType = exchange.getAttribute("apiMessagType");
 
 		// 요청 메시지
-		if (esbStatusCode.isEmpty()) {
+		if (apiMessagType.equals(ApiMessageType.REQUEST)) {
 			jmsTemplate.ifPresent(jms -> {
 				loggingService.asyncStartLogging(jms, interfaceId, transactionId, sendSystemCode, receiveSystemCode,
 						totalCount);
@@ -110,7 +123,7 @@ public class GatewayLoggingFilter implements GlobalFilter {
 				});
 			}
 			// 응답 메시지
-		} else {
+		} else if (apiMessagType.equals(ApiMessageType.RESPONSE)) {
 			jmsTemplate.ifPresent(jms -> {
 				if (errorMessage != null) {
 					loggingService.asyncEndLogging(jms, interfaceId, transactionId, totalCount, ESBStatusConstants.FAIL,
@@ -120,6 +133,24 @@ public class GatewayLoggingFilter implements GlobalFilter {
 							esbStatusMessage);
 				}
 			});
+			// 동기 메시지
+		} else {
+			if (isSyncRequest) {
+				jmsTemplate.ifPresent(jms -> {
+					loggingService.asyncStartLogging(jms, interfaceId, transactionId, sendSystemCode, receiveSystemCode,
+							totalCount);
+				});
+			} else {
+				jmsTemplate.ifPresent(jms -> {
+					if (errorMessage != null) {
+						loggingService.asyncEndLogging(jms, interfaceId, transactionId, totalCount,
+								ESBStatusConstants.FAIL, errorMessage);
+					} else {
+						loggingService.asyncEndLogging(jms, interfaceId, transactionId, errorCount, esbStatusCode,
+								esbStatusMessage);
+					}
+				});
+			}
 		}
 	}
 }

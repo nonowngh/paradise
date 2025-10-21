@@ -1,8 +1,8 @@
 package mb.fw.paradise.constants;
 
-public class APIContextPathConstants {
+public class ApiContextPathConstants {
 
-	private APIContextPathConstants() {
+	private ApiContextPathConstants() {
 	}
 
 	// 기본 root path

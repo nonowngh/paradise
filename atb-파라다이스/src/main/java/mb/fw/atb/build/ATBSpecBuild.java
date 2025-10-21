@@ -23,10 +23,10 @@ public class ATBSpecBuild {
      * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        ATBSpecBuild atbSpecTest = new ATBSpecBuild();
-        log.info("ATBSpecBuild start");
-        atbSpecTest.writeResourceFile();
-        log.info("ATBSpecBuild end");
+//        ATBSpecBuild atbSpecTest = new ATBSpecBuild();
+//        log.info("ATBSpecBuild start");
+//        atbSpecTest.writeResourceFile();
+//        log.info("ATBSpecBuild end");
     }
 
     public void writeResourceFile() throws IOException {

@@ -13,7 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 import mb.fw.paradise.config.annotaion.ConditionalOnAdaptorType;
 import mb.fw.paradise.constants.AdaptorConstants;
 import mb.fw.paradise.constants.AdaptorType;
-import mb.fw.paradise.constants.ESBAPIHeaderConstants;
+import mb.fw.paradise.constants.ApiMessageType;
+import mb.fw.paradise.constants.ESBApiHeaderConstants;
 import mb.fw.paradise.constants.TargetContextPathConstants;
 import mb.fw.paradise.module.handler.DBReceiveProcessHandler;
 import mb.fw.paradise.module.handler.DBResultProcessHandler;
@@ -40,22 +41,19 @@ public class ModuleRouterConfig {
 			RFCCallHandler rfcCallHandler) {
 
 		String rootPath = TargetContextPathConstants.DEFAULT_PATH + "/" + AdaptorConstants.MY_SYSTEM_CODE.toLowerCase();
-
 		return RouterFunctions.route()
 				.nest(RequestPredicates.path(rootPath),
 						builder -> builder.POST(TargetContextPathConstants.RCV_DB_PROCESS, dbProcessHandler::dbProcess)
-								.POST(TargetContextPathConstants.RCV_DB_PROCESS_SYNC, dbProcessHandler::dbSyncProcess)
 								.POST(TargetContextPathConstants.RCV_RFC_CALL, rfcCallHandler::rfcProcess)
+								.POST(TargetContextPathConstants.RCV_DB_PROCESS_SYNC, dbProcessHandler::dbSyncProcess)
 								.POST(TargetContextPathConstants.RCV_RFC_CALL_SYNC, rfcCallHandler::rfcSyncProcess))
-				.build().filter(logRequestAndResponse()).filter(checkAllowInterfaceList())
-				.filter(moduleExceptionHandler());
+				.build().filter(logRequestAndResponse()).filter(moduleExceptionHandler());
 	}
 
 	@Bean
 	RouterFunction<ServerResponse> sendRoutes(DBResultProcessHandler dbResultProcessHandler,
 			ESBAPIServletHandler esbAPIServletHandler) {
 		String rootPath = TargetContextPathConstants.DEFAULT_PATH + "/" + AdaptorConstants.MY_SYSTEM_CODE.toLowerCase();
-
 		return RouterFunctions.route().nest(RequestPredicates.path(rootPath),
 				builder -> builder
 						.POST(TargetContextPathConstants.RESULT_DB_PROCESS, dbResultProcessHandler::dbResultProcess)
@@ -67,11 +65,25 @@ public class ModuleRouterConfig {
 		return (request, next) -> {
 			HttpHeaders headers = request.headers().asHttpHeaders();
 			return next.handle(request).onErrorResume(e -> {
-				exceptionService.receiveHandlerExceptionProcess(e, headers);
-				return ServerResponse.noContent().build();
+				if (ApiMessageType.SYNC.name()
+						.equals(HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.API_MESSAGE_TYPE))) {
+					return ServerResponse.status(500).bodyValue(exceptionService.syncExceptionProcess(e, headers));
+				} else {
+					exceptionService.receiveHandlerExceptionProcess(e, headers);
+					return ServerResponse.noContent().build();
+				}
 			});
 		};
 	}
+
+//	private HandlerFilterFunction<ServerResponse, ServerResponse> moduleExceptionHandlerSync() {
+//		return (request, next) -> {
+//			HttpHeaders headers = request.headers().asHttpHeaders();
+//			return next.handle(request).onErrorResume(e -> {
+//				return ServerResponse.status(500).bodyValue(exceptionService.syncExceptionProcess(e, headers));
+//			});
+//		};
+//	}
 
 	private HandlerFilterFunction<ServerResponse, ServerResponse> moduleResultExceptionHandler() {
 		return (request, next) -> {
@@ -101,12 +113,17 @@ public class ModuleRouterConfig {
 	private HandlerFilterFunction<ServerResponse, ServerResponse> checkAllowInterfaceList() {
 		return (request, next) -> {
 			HttpHeaders headers = request.headers().asHttpHeaders();
-			String interfaceId = HttpHeaderUtil.getHeader(headers, ESBAPIHeaderConstants.INTERFACE_ID);
+			String interfaceId = HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.INTERFACE_ID);
 			boolean allowed = config.getInterfaceList().stream().anyMatch(id -> id.equals(interfaceId));
 			if (!allowed) {
-				exceptionService.receiveHandlerExceptionProcess(new Exception("등록되지 않은 인터페이스 아이디 -> " + interfaceId),
-						headers);
-				return ServerResponse.noContent().build();
+				Exception e = new Exception("등록되지 않은 인터페이스 아이디 -> " + interfaceId);
+				if (ApiMessageType.SYNC.name()
+						.equals(HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.API_MESSAGE_TYPE))) {
+					return ServerResponse.status(500).bodyValue(e.getMessage());
+				} else {
+					exceptionService.receiveHandlerExceptionProcess(e, headers);
+					return ServerResponse.noContent().build();
+				}
 			}
 			return next.handle(request);
 		};

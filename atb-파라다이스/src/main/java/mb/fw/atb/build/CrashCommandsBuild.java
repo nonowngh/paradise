@@ -34,13 +34,13 @@ public class CrashCommandsBuild {
         List<String> writeStrList = Lists.newArrayList();
         for (String file : fileNames) {
             String writeStr = resourcePath + "/" + file;
-            log.info("command : {}", writeStr);
+//            log.info("command : {}", writeStr);
             writeStrList.add(writeStr);
         }
 
         // Write the list to commands.json in the resources directory
         File outputFile = new File(classLoader.getResource("commands.json").getPath());
-        log.info("outputFile : {}", outputFile.getAbsolutePath());
+//        log.info("outputFile : {}", outputFile.getAbsolutePath());
         FileUtils.writeByteArrayToFile(outputFile, mapper.writeValueAsString(writeStrList).getBytes());
     }
 }
