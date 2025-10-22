@@ -35,17 +35,16 @@ public class RFCCallHandler {
 				.switchIfEmpty(Mono.error(new IllegalArgumentException("요청 body가 존재하지 않습니다."))) // body 없을 때 에러 처리
 				.flatMap(request -> apiService.getInterfaceInfo(request.getInterfaceId()).flatMap(
 						interfaceInfo -> rfcModuleService.rfcCallAndResponse(interfaceInfo, request).flatMap(result -> {
-							return HttpHeaderUtil.makeDefaultResponseHeader(requestHeader, ESBStatusConstants.SUCCESS, "처리 성공").bodyValue(result);
+							return HttpHeaderUtil.makeDefaultOkResponseHeader(requestHeader).bodyValue(result);
 						})))
 				.onErrorResume(error -> {
 					log.error("Error [rfc-sync-process] -> {}", error.getMessage(), error);
 					return HttpHeaderUtil
-							.makeDefaultResponseHeader(requestHeader, ESBStatusConstants.FAIL, error.getMessage())
+							.makeDefaultErrorResponseHeader(requestHeader, error.getMessage())
 							.bodyValue(APIResponseMessage.builder()
 									.interfaceId(HttpHeaderUtil.getHeader(requestHeader, ESBApiHeaderConstants.INTERFACE_ID))
 									.transactionId(HttpHeaderUtil.getHeader(requestHeader, ESBApiHeaderConstants.TRANSACTION_ID))
-									.totalDataCount(HttpHeaderUtil.getIntHeader(requestHeader, ESBApiHeaderConstants.TOTAL_COUNT))
-									.errorDataCount(HttpHeaderUtil.getIntHeader(requestHeader, ESBApiHeaderConstants.TOTAL_COUNT))
+									.dataCount(HttpHeaderUtil.getIntHeader(requestHeader, ESBApiHeaderConstants.DATA_COUNT))
 									.statusCode(ESBStatusConstants.FAIL).statusMessage(error.getMessage()).build());
 				});
 	}

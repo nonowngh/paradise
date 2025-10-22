@@ -1,9 +1,10 @@
-package mb.fw.paradise.module.service.sqlexecutor;
+package mb.fw.paradise.module.service.executor;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
@@ -68,28 +69,34 @@ public class ReceiveQueryExecutor {
 			});
 		});
 	}
-	
-	public DataItem processSelect(InterfaceInfo interfaceInfo, APIRequestMessage request) {
+
+	public DataItem processSelect(InterfaceInfo interfaceInfo, APIRequestMessage request) throws Exception {
 		List<SqlQuery> queryList = new ArrayList<>(interfaceInfo.getSqlQueryList());
 		LinkedHashMap<String, Object> param = request.getDataItem().getParameter();
 		List<PatternProperty> propertyList = new ArrayList<>(interfaceInfo.getPropertyList());
 		LinkedHashMap<String, List<Map<String, Object>>> tableMap = new LinkedHashMap<>();
-		if(InterfaceInfoPropertyUtil.existProperty(propertyList, InterfaceInfoPropertyConstants.RECV_TABLE_NAMES)) {
-			List<String> tableNameList = InterfaceInfoPropertyUtil.getValueList(new ArrayList<>(interfaceInfo.getPropertyList()),
-					InterfaceInfoPropertyConstants.RECV_TABLE_NAMES);
+		if (InterfaceInfoPropertyUtil.existProperty(propertyList, InterfaceInfoPropertyConstants.RECV_TABLE_NAMES)) {
+			List<String> tableNameList = InterfaceInfoPropertyUtil.getValueList(
+					new ArrayList<>(interfaceInfo.getPropertyList()), InterfaceInfoPropertyConstants.RECV_TABLE_NAMES);
 			tableNameList.forEach(tableName -> {
-				String expectedSqlId = SQLConstants.SQL_ID_SELECT + "." + tableName;
-				queryList.stream().filter(q -> expectedSqlId.equals(q.getSqlId())).findFirst().ifPresent(query -> {
-					List<Map<String, Object>> dataList = simpleSqlSessionTemplate.selectList(query.getQuery(), param);
+				Optional<SqlQuery> query = queryList.stream()
+						.filter(q -> (SQLConstants.SQL_ID_SELECT + "." + tableName).equals(q.getSqlId())).findFirst();
+				if (query.isPresent()) {
+					List<Map<String, Object>> dataList = simpleSqlSessionTemplate.selectList(query.get().getQuery(), param);
 					tableMap.put(tableName, dataList);
-				});
+				} else {
+					throw new RuntimeException("Nothing sql-id [" + SQLConstants.SQL_ID_SELECT + "." + tableName + "]");
+				}
 			});
-		}else {
+		} else {
 			String expectedSqlId = SQLConstants.SQL_ID_SELECT;
-			queryList.stream().filter(q -> expectedSqlId.equals(q.getSqlId())).findFirst().ifPresent(query -> {
-				List<Map<String, Object>> dataList = simpleSqlSessionTemplate.selectList(query.getQuery(), param);
+			Optional<SqlQuery> query = queryList.stream().filter(q -> expectedSqlId.equals(q.getSqlId())).findFirst();
+			if (query.isPresent()) {
+				List<Map<String, Object>> dataList = simpleSqlSessionTemplate.selectList(query.get().getQuery(), param);
 				tableMap.put("data", dataList);
-			});
+			} else {
+				throw new RuntimeException("Nothing sql-id [" + SQLConstants.SQL_ID_SELECT + "]");
+			}
 		}
 		return DataItem.builder().table(tableMap).build();
 	}

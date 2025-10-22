@@ -12,6 +12,7 @@ import mb.fw.paradise.constants.PatternType;
 import mb.fw.paradise.dto.APIRequestMessage;
 import mb.fw.paradise.dto.APIResponseMessage;
 import mb.fw.paradise.service.APIService;
+import mb.fw.paradise.service.exception.CustomGatewayException;
 import mb.fw.paradise.util.TransactionGenerator;
 import reactor.core.publisher.Mono;
 
@@ -43,16 +44,20 @@ public class ESBAPIServletHandler {
 							String transactionId = TransactionIdGenerator.generate(interfaceId,
 									TransactionGenerator.getNextSequence(), TransactionGenerator.getDateTimeNow());
 							request.setTransactionId(transactionId);
-							request.setTotalDataCount(1);
+							request.setDataCount(1);
 							return apiService.callGatewaySync(request, targetPath, interfaceInfo.getSndSystemCode(),
 									interfaceInfo.getRcvSystemCode());
 						});
 					}).flatMap(response -> ServerResponse.ok().bodyValue(response)).onErrorResume(error -> {
 						log.error("Error [API call-gateway process] -> {}", error.getMessage(), error);
-						return ServerResponse.status(500)
-								.bodyValue(APIResponseMessage.builder().interfaceId(request.getInterfaceId())
-										.resultItem(request.getDataItem()).statusCode(ESBStatusConstants.FAIL)
-										.statusMessage(error.getMessage()).build());
+						if (error instanceof CustomGatewayException)
+							return ServerResponse.status(500).bodyValue(((CustomGatewayException)error).getApiResponse());
+						else
+							return ServerResponse.status(500)
+									.bodyValue(APIResponseMessage.builder().interfaceId(request.getInterfaceId())
+											.transactionId(request.getTransactionId()).dataCount(request.getDataCount())
+											.statusCode(ESBStatusConstants.FAIL).statusMessage(error.getMessage())
+											.build());
 					});
 				});
 	}

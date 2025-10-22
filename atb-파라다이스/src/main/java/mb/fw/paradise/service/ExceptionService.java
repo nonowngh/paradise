@@ -25,8 +25,7 @@ public class ExceptionService {
 				.interfaceId(HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.INTERFACE_ID))
 				.transactionId(HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.TRANSACTION_ID))
 				.statusCode(ESBStatusConstants.FAIL).statusMessage(e.getMessage())
-				.totalDataCount(Integer.valueOf(HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.TOTAL_COUNT)))
-				.errorDataCount(Integer.valueOf(HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.TOTAL_COUNT)))
+				.dataCount(Integer.valueOf(HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.DATA_COUNT)))
 				.build(), HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.CALL_BACK_PATH));
 	}
 	
@@ -36,8 +35,7 @@ public class ExceptionService {
 				.interfaceId(HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.INTERFACE_ID))
 				.transactionId(HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.TRANSACTION_ID))
 				.statusCode(ESBStatusConstants.FAIL).statusMessage(e.getMessage())
-				.totalDataCount(Integer.valueOf(HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.TOTAL_COUNT)))
-				.errorDataCount(Integer.valueOf(HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.TOTAL_COUNT)))
+				.dataCount(Integer.valueOf(HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.DATA_COUNT)))
 				.build();
 	}
 }

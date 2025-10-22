@@ -50,7 +50,7 @@ public class DBPollingAndSend implements BatchModule {
 					return dbModuleService.getSendData(interfaceInfo, transactionId)
 							.flatMap(dataItem -> apiService.callGateway(
 									APIRequestMessage.builder().interfaceId(interfaceId).transactionId(transactionId)
-											.dataItem(dataItem).totalDataCount(DataItemUtil.tableDataCount(dataItem)).build(),
+											.dataItem(dataItem).dataCount(DataItemUtil.tableDataCount(dataItem)).build(),
 									targetPath, interfaceInfo.getSndSystemCode(), interfaceInfo.getRcvSystemCode(),
 									callBackPath));
 				})).switchIfEmpty(Mono.fromRunnable(() -> log.info("조회 데이터 없음")))

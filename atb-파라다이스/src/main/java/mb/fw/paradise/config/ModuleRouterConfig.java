@@ -99,10 +99,10 @@ public class ModuleRouterConfig {
 		return (request, next) -> {
 			long startTime = System.currentTimeMillis();
 			// 요청 정보 로그
-			log.info("[REQ] {} {}", request.methodName(), request.path());
+			log.info("[REQ] {} {} [Header Info] {}", request.methodName(), request.path(),request.headers().asHttpHeaders().toString());
 			return next.handle(request).doOnSuccess(response -> {
 				long duration = System.currentTimeMillis() - startTime;
-				log.info("[RES] {} {} ({} ms)", request.methodName(), request.path(), duration);
+				log.info("[RES] {} {} ({} ms)  [Header Info] {}", request.methodName(), request.path(), duration, response.headers());
 			}).doOnError(e -> {
 				long duration = System.currentTimeMillis() - startTime;
 				log.error("[ERROR] {} {} ({} ms) - {}", request.methodName(), request.path(), duration, e.getMessage());

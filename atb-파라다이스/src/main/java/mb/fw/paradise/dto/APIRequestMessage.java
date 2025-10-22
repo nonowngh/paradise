@@ -1,10 +1,14 @@
 package mb.fw.paradise.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class APIRequestMessage {
 
 	private String interfaceId;
@@ -13,13 +17,7 @@ public class APIRequestMessage {
 	
 	private DataItem dataItem;
 	
-	private int totalDataCount;
-	
-//	private String callBackPath;
-	
-//	private String sendSystemCode;
-//	
-//	private String receiveSystemCode;
+	private int dataCount;
 	
 }
 

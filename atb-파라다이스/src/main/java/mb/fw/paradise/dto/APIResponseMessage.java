@@ -1,10 +1,14 @@
 package mb.fw.paradise.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class APIResponseMessage {
 
 	private String interfaceId;
@@ -17,8 +21,6 @@ public class APIResponseMessage {
 
 	private String statusMessage;
 
-	private int errorDataCount;
-
-	private int totalDataCount;
+	private int dataCount;
 
 }

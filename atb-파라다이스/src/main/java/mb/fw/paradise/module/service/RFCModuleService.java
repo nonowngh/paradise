@@ -19,7 +19,7 @@ import mb.fw.paradise.constants.InterfaceInfoPropertyConstants;
 import mb.fw.paradise.dto.APIRequestMessage;
 import mb.fw.paradise.dto.APIResponseMessage;
 import mb.fw.paradise.dto.DataItem;
-import mb.fw.paradise.module.service.sqlexecutor.JcoExecutor;
+import mb.fw.paradise.module.service.executor.JcoExecutor;
 import mb.fw.paradise.util.DataItemUtil;
 import mb.fw.paradise.util.InterfaceInfoPropertyUtil;
 import reactor.core.publisher.Mono;
@@ -57,7 +57,7 @@ public class RFCModuleService {
 					exportTableList);
 			return APIResponseMessage.builder().statusCode(ESBStatusConstants.SUCCESS)
 					.interfaceId(request.getInterfaceId()).transactionId(request.getTransactionId())
-					.totalDataCount(DataItemUtil.tableDataCount(resultItem)).resultItem(resultItem).build();
+					.dataCount(DataItemUtil.tableDataCount(resultItem)).resultItem(resultItem).build();
 		}).subscribeOn(Schedulers.boundedElastic()) // 블로킹 작업 안전 처리
 				.onErrorResume(e -> {
 					return Mono.error(new RuntimeException("RFC 처리 실패: " + e.getMessage(), e));

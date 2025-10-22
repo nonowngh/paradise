@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.crsh.console.jline.internal.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,8 +23,8 @@ import mb.fw.paradise.constants.InterfaceInfoPropertyConstants;
 import mb.fw.paradise.dto.APIRequestMessage;
 import mb.fw.paradise.dto.APIResponseMessage;
 import mb.fw.paradise.dto.DataItem;
-import mb.fw.paradise.module.service.sqlexecutor.ReceiveQueryExecutor;
-import mb.fw.paradise.module.service.sqlexecutor.SendQueryExecutor;
+import mb.fw.paradise.module.service.executor.ReceiveQueryExecutor;
+import mb.fw.paradise.module.service.executor.SendQueryExecutor;
 import mb.fw.paradise.util.DataItemUtil;
 import mb.fw.paradise.util.InterfaceInfoPropertyUtil;
 import reactor.core.publisher.Mono;
@@ -100,12 +99,12 @@ public class DBModuleService {
 	}
 
 	@Transactional
-	private APIResponseMessage transactionalProcess(InterfaceInfo interfaceInfo, APIRequestMessage request) {
+	private APIResponseMessage transactionalProcess(InterfaceInfo interfaceInfo, APIRequestMessage request) throws Exception {
 		String workType = InterfaceInfoPropertyUtil.getValue(new ArrayList<>(interfaceInfo.getPropertyList()),
 				InterfaceInfoPropertyConstants.DB_WORK_TYPE);
 		APIResponseMessage response = APIResponseMessage.builder().statusCode(ESBStatusConstants.SUCCESS)
 				.interfaceId(request.getInterfaceId()).transactionId(request.getTransactionId())
-				.totalDataCount(request.getTotalDataCount()).build();
+				.dataCount(request.getDataCount()).build();
 		for (char ch : workType.toCharArray()) {
 			switch (ch) {
 			case 'D':
@@ -123,7 +122,7 @@ public class DBModuleService {
 			case 'S':
 				DataItem resultItem = receiveQueryExecutor.processSelect(interfaceInfo, request);
 				response.setResultItem(resultItem);
-				response.setTotalDataCount(DataItemUtil.tableDataCount(resultItem));
+				response.setDataCount(DataItemUtil.tableDataCount(resultItem));
 				break;
 			default:
 				throw new IllegalArgumentException("Invalid 'workType' : " + ch);

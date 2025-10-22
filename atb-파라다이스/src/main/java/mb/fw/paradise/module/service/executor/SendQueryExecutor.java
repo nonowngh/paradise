@@ -1,4 +1,4 @@
-package mb.fw.paradise.module.service.sqlexecutor;
+package mb.fw.paradise.module.service.executor;
 
 import java.util.LinkedHashMap;
 import java.util.List;
