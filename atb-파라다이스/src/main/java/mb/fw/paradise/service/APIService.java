@@ -9,6 +9,9 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import lombok.extern.slf4j.Slf4j;
 import mb.fw.paradise.api.model.InterfaceInfo;
 import mb.fw.paradise.constants.ApiMessageType;
@@ -26,6 +29,7 @@ public class APIService {
 
 	private final WebClient interfaceInfoWebClient;
 	private final WebClient gatewayWebClient;
+	ObjectMapper mapper = new ObjectMapper();
 
 	public APIService(@Qualifier("interfaceInfoWebClient") WebClient interfaceInfoWebClient,
 			@Qualifier("gatewayWebClient") WebClient gatewayWebClient) {
@@ -91,57 +95,31 @@ public class APIService {
 			headers.set(ESBApiHeaderConstants.API_MESSAGE_TYPE, ApiMessageType.SYNC.name());
 //			headers.set(ESBAPIHeaderConstants.CALL_BACK_PATH, callBackPath);
 //			headers.set("Authorization", "Bearer " + )); // 토큰이 있는 경우
-		}).bodyValue(request).retrieve()
-				.onStatus(HttpStatus::isError, response -> response.bodyToMono(APIResponseMessage.class)
-						.switchIfEmpty(Mono.error(new CustomGatewayException("응답 바디가 없음",
+		}).bodyValue(request).retrieve().onStatus(HttpStatus::isError, response -> {
+			return response.bodyToMono(String.class)
+					.switchIfEmpty(Mono.error(new CustomGatewayException("응답 바디가 없음",
+							APIResponseMessage.builder().interfaceId(request.getInterfaceId())
+									.transactionId(request.getTransactionId()).dataCount(request.getDataCount())
+									.statusCode(ESBStatusConstants.FAIL).statusMessage("응답 바디 null").build())))
+					.flatMap(error -> {
+						APIResponseMessage responseMessage = APIResponseMessage.builder().build();
+						try {
+							responseMessage = mapper.readValue(error, APIResponseMessage.class);
+							if (responseMessage.getInterfaceId() != null
+									&& !responseMessage.getInterfaceId().isEmpty()) {
+								return Mono.error(new CustomGatewayException(
+										"게이트웨이 전송 중 오류 발생(APIResponseMessage) : " + responseMessage.getStatusMessage(),
+										responseMessage));
+							}
+						} catch (JsonProcessingException e) {
+							log.warn("response json parse error");
+						}
+						return Mono.error(new CustomGatewayException("게이트웨이 전송 중 오류 발생(APIResponseMessage) : " + error,
 								APIResponseMessage.builder().interfaceId(request.getInterfaceId())
 										.transactionId(request.getTransactionId()).dataCount(request.getDataCount())
-										.statusCode(ESBStatusConstants.FAIL).statusMessage("응답 바디 null").build())))
-						.flatMap(errorBody -> Mono.error(new CustomGatewayException(
-								"게이트웨이 전송 중 오류 발생(APIResponseMessage) : " + errorBody.getStatusMessage(), errorBody))))
-				.bodyToMono(APIResponseMessage.class)
-				.doOnSuccess(response -> log.info("데이터 전송 완료 - 응답 바디 : {}", response));
+										.statusCode(ESBStatusConstants.FAIL).statusMessage(error).build()));
+					});
+		}).bodyToMono(APIResponseMessage.class).doOnSuccess(response -> log.info("데이터 전송 완료 - 응답 바디 : {}", response));
 	}
-//												.transactionId(request.getTransactionId()).dataCount(request.getDataCount())
-//												.statusCode(ESBStatusConstants.FAIL).statusMessage(body).build()))))))
-//				.flatMap(errorBody -> Mono.error(new CustomGatewayException(
-//						"게이트웨이 전송 중 오류 발생(APIResponseMessage) : " + errorBody.getStatusMessage(), errorBody).getApiResponse()))
-//				.onErrorResume(e -> response.bodyToMono(String.class).doOnNext(error -> log.error("Error -> {}", error))
-//						.flatMap(body -> Mono.error(new CustomGatewayException("게이트웨이 전송 중 오류 발생(String) : " + body,
-//								APIResponseMessage.builder().interfaceId(request.getInterfaceId())
-//										.transactionId(request.getTransactionId()).dataCount(request.getDataCount())
-//										.statusCode(ESBStatusConstants.FAIL).statusMessage(body).build())).getApiResponse()))
-
-//	public Mono<APIResponseMessage> callGatewaySync(APIRequestMessage request, String targetPath, String sendSystemCode,
-//			String receiveSystemCode) {
-//
-//		return gatewayWebClient.post().uri("/" + targetPath.toLowerCase()).headers(headers -> {
-//			headers.setContentType(MediaType.APPLICATION_JSON);
-//			headers.set(ESBApiHeaderConstants.INTERFACE_ID, request.getInterfaceId());
-//			headers.set(ESBApiHeaderConstants.TRANSACTION_ID, request.getTransactionId());
-//			headers.set(ESBApiHeaderConstants.SEND_SYSTEM_CODE, sendSystemCode);
-//			headers.set(ESBApiHeaderConstants.RECEIVE_SYSTEM_CODE, receiveSystemCode);
-//			headers.set(ESBApiHeaderConstants.DATA_COUNT,
-//					request.getDataCount() == 0 ? "1" : String.valueOf(request.getDataCount()));
-//			headers.set(ESBApiHeaderConstants.API_MESSAGE_TYPE, ApiMessageType.SYNC.name());
-//		}).bodyValue(request).exchangeToMono(response -> {
-//			HttpHeaders responseHeaders = response.headers().asHttpHeaders();
-//			responseHeaders.forEach((key, values) -> {
-//				values.forEach(value -> log.info("응답 헤더: {} = {}", key, value));
-//			});
-//			if (response.statusCode().isError()) {
-//				response.bodyToMono(APIResponseMessage.class)
-//						.map(errorBody -> (Throwable) new CustomGatewayException(
-//								"게이트웨이 전송 중 오류 발생(APIResponseMessage) : " + errorBody.getStatusMessage(), errorBody))
-//						.onErrorResume(e -> response.bodyToMono(String.class).map(
-//								body -> (Throwable) new CustomGatewayException("게이트웨이 전송 중 오류 발생(String) : " + body,
-//										APIResponseMessage.builder().interfaceId(request.getInterfaceId())
-//												.transactionId(request.getTransactionId())
-//												.dataCount(request.getDataCount()).statusCode(ESBStatusConstants.FAIL)
-//												.statusMessage(body).build())));
-//			}
-//			return response.bodyToMono(APIResponseMessage.class);
-//		}).doOnSuccess(response -> log.info("데이터 전송 완료"));
-//	}
 
 }

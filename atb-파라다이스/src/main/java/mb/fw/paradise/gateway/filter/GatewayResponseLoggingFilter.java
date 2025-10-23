@@ -1,5 +1,6 @@
 package mb.fw.paradise.gateway.filter;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 import org.reactivestreams.Publisher;
@@ -8,6 +9,7 @@ import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpResponse;
@@ -22,6 +24,7 @@ import mb.fw.paradise.constants.ESBApiHeaderConstants;
 import mb.fw.paradise.constants.ESBStatusConstants;
 import mb.fw.paradise.service.LoggingService;
 import mb.fw.paradise.util.HttpHeaderUtil;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Slf4j
@@ -43,46 +46,85 @@ public class GatewayResponseLoggingFilter implements GlobalFilter {
         ServerHttpResponse originalResponse = exchange.getResponse();
 
         ServerHttpResponseDecorator decoratedResponse = new ServerHttpResponseDecorator(originalResponse) {
-            @Override
+        	@Override
             public Mono<Void> writeWith(Publisher<? extends DataBuffer> body) {
-                HttpHeaders backendHeaders = getDelegate().getHeaders();
+                if (body instanceof Flux) {
+                    Flux<? extends DataBuffer> fluxBody = (Flux<? extends DataBuffer>) body;
 
-                log.info("[HTTP 응답 헤더] : {}", backendHeaders);
-                
-        		String esbStatusCode = HttpHeaderUtil.getHeader(backendHeaders, ESBApiHeaderConstants.ESB_STATUS_CODE);
-        		String esbStatusMessage = HttpHeaderUtil.getHeader(backendHeaders, ESBApiHeaderConstants.ESB_STATUS_MESSAGE);
-        		
-    			HttpStatus statusCode = originalResponse.getStatusCode();
-    			log.info("[GatewayFilter] Response Status Code: {}", statusCode);
+                    return super.writeWith(
+                        fluxBody.map(dataBuffer -> {
+                            byte[] content = new byte[dataBuffer.readableByteCount()];
+                            dataBuffer.read(content);
+                            DataBufferUtils.release(dataBuffer);
 
-    			if (statusCode != null && !statusCode.is2xxSuccessful()) {
-    				log.warn("[gateway-logging-filter] Non-200 Response Detected: {}", statusCode);
-    				String errorMessage = "요청 처리 오류 : [" + statusCode + "] "
-    						+ exchange.getAttribute("gateway_exception_message");
-    				if (ESBStatusConstants.FAIL.equals(esbStatusCode) && !esbStatusMessage.isEmpty()) {
-    					log.info("ESB status message -> {}", esbStatusMessage);
-    					errorMessage = "요청 처리 오류 : [" + statusCode + "] " + esbStatusMessage;
-    				}
-    				processByHeaders(backendHeaders, errorMessage, false);
-    			} else {
-    				processByHeaders(backendHeaders, null, false);
-    			}
-                
+                            String responseBody = new String(content, StandardCharsets.UTF_8);
+                            log.error("서버 응답 바디: {}", responseBody); // ← 여기서 에러 메시지 확인 가능
+
+                            return bufferFactory().wrap(content);
+                        })
+                    );
+                }
                 return super.writeWith(body);
             }
         };
+//        	@Override
+//            public Mono<Void> writeWith(Publisher<? extends DataBuffer> body) {
+//                HttpHeaders backendHeaders = getDelegate().getHeaders();
+//
+//                log.info("[HTTP 응답 헤더] : {}", backendHeaders);
+//                
+//        		String esbStatusCode = HttpHeaderUtil.getHeader(backendHeaders, ESBApiHeaderConstants.ESB_STATUS_CODE);
+//        		String esbStatusMessage = HttpHeaderUtil.getHeader(backendHeaders, ESBApiHeaderConstants.ESB_STATUS_MESSAGE);
+//        		
+//    			HttpStatus statusCode = originalResponse.getStatusCode();
+//    			log.info("[GatewayFilter] Response Status Code: {}", statusCode);
+//
+//    			if (statusCode != null && !statusCode.is2xxSuccessful()) {
+//    				log.warn("[gateway-logging-filter] Non-200 Response Detected: {}", statusCode);
+//    				String errorMessage = "요청 처리 오류 : [" + statusCode + "] "
+//    						+ exchange.getAttribute("gateway_exception_message");
+//    				if (ESBStatusConstants.FAIL.equals(esbStatusCode) && !esbStatusMessage.isEmpty()) {
+//    					log.info("ESB status message -> {}", esbStatusMessage);
+//    					errorMessage = "요청 처리 오류 : [" + statusCode + "] " + esbStatusMessage;
+//    				}
+//    				processByHeaders(backendHeaders, errorMessage, false);
+//    			} else {
+//    				processByHeaders(backendHeaders, null, false);
+//    			}
+//                
+//                return super.writeWith(body);
+//            }
+//        };
+        ServerWebExchange mutatedExchange = exchange.mutate().response(decoratedResponse).build();
+        
+        String interfaceId = (String) mutatedExchange.getAttribute("interfaceId");
+        String transactionId = (String) mutatedExchange.getAttribute("transactionId");
+        String sendSystemCode = (String) mutatedExchange.getAttribute("sendSystemCode");
+        String receiveSystemCode = (String) mutatedExchange.getAttribute("receiveSystemCode");
+        int dataCount = mutatedExchange.getAttribute("dataCount");
         
         decoratedResponse.beforeCommit(() -> {
             HttpHeaders headers = decoratedResponse.getHeaders();
             HttpStatus status = decoratedResponse.getStatusCode();
+            headers.add(ESBApiHeaderConstants.INTERFACE_ID, interfaceId);
+            headers.add(ESBApiHeaderConstants.TRANSACTION_ID, transactionId);
+            headers.add(ESBApiHeaderConstants.SEND_SYSTEM_CODE, sendSystemCode);
+            headers.add(ESBApiHeaderConstants.RECEIVE_SYSTEM_CODE, receiveSystemCode);
+            if(!status.is2xxSuccessful()) {
+                headers.add(ESBApiHeaderConstants.ESB_STATUS_CODE, ESBStatusConstants.FAIL);
+                headers.add(ESBApiHeaderConstants.ESB_STATUS_MESSAGE, sendSystemCode);
+
+            }
             log.info("응답 커밋 직전, 상태: {}, 헤더: {}", status, headers);
             return Mono.empty();
         });
 
-        ServerWebExchange mutatedExchange = exchange.mutate().response(decoratedResponse).build();
+        
 		return chain.filter(mutatedExchange).doOnError(e -> {
 		    log.error("응답 처리 중 오류 발생: {}", e.getMessage(), e);
+		    decoratedResponse.getHeaders().add(ESBApiHeaderConstants.ESB_STATUS_MESSAGE, e.getMessage());
 		});
+//				.doFinally(onFinally);
 	}
 
 	private void processByHeaders(HttpHeaders backendHeaders, String errorMessage, boolean isSyncRequest) {
