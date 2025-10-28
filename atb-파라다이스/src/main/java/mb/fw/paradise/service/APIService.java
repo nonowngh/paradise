@@ -19,7 +19,7 @@ import mb.fw.paradise.constants.ESBApiHeaderConstants;
 import mb.fw.paradise.constants.ESBStatusConstants;
 import mb.fw.paradise.dto.APIRequestMessage;
 import mb.fw.paradise.dto.APIResponseMessage;
-import mb.fw.paradise.service.exception.CustomGatewayException;
+import mb.fw.paradise.gateway.exception.CustomGatewayException;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
@@ -102,9 +102,8 @@ public class APIService {
 									.transactionId(request.getTransactionId()).dataCount(request.getDataCount())
 									.statusCode(ESBStatusConstants.FAIL).statusMessage("응답 바디 null").build())))
 					.flatMap(error -> {
-						APIResponseMessage responseMessage = APIResponseMessage.builder().build();
 						try {
-							responseMessage = mapper.readValue(error, APIResponseMessage.class);
+							APIResponseMessage responseMessage = mapper.readValue(error, APIResponseMessage.class);
 							if (responseMessage.getInterfaceId() != null
 									&& !responseMessage.getInterfaceId().isEmpty()) {
 								return Mono.error(new CustomGatewayException(
@@ -114,7 +113,7 @@ public class APIService {
 						} catch (JsonProcessingException e) {
 							log.warn("response json parse error");
 						}
-						return Mono.error(new CustomGatewayException("게이트웨이 전송 중 오류 발생(APIResponseMessage) : " + error,
+						return Mono.error(new CustomGatewayException("게이트웨이 전송 중 오류 발생(String) : " + error,
 								APIResponseMessage.builder().interfaceId(request.getInterfaceId())
 										.transactionId(request.getTransactionId()).dataCount(request.getDataCount())
 										.statusCode(ESBStatusConstants.FAIL).statusMessage(error).build()));

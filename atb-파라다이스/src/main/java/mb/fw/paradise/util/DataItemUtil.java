@@ -11,11 +11,10 @@ public class DataItemUtil {
 
 	public static int tableDataCount(DataItem resultItem) {
 		if (resultItem == null || resultItem.getTable() == null) {
-			return 1;
+			return 0;
 		}
 		LinkedHashMap<String, List<Map<String, Object>>> table = resultItem.getTable();
-		int count = table.values().stream().filter(Objects::nonNull).mapToInt(List::size).sum();
-		return count == 0 ? 1 : count;
+		return table.values().stream().filter(Objects::nonNull).mapToInt(List::size).sum();
 	}
 
 	public static void main(String[] args) {

@@ -1,4 +1,4 @@
-package mb.fw.paradise.service.exception;
+package mb.fw.paradise.gateway.exception;
 
 import mb.fw.paradise.dto.APIResponseMessage;
 

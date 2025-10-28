@@ -11,8 +11,8 @@ import mb.fw.paradise.constants.ESBStatusConstants;
 import mb.fw.paradise.constants.PatternType;
 import mb.fw.paradise.dto.APIRequestMessage;
 import mb.fw.paradise.dto.APIResponseMessage;
+import mb.fw.paradise.gateway.exception.CustomGatewayException;
 import mb.fw.paradise.service.APIService;
-import mb.fw.paradise.service.exception.CustomGatewayException;
 import mb.fw.paradise.util.TransactionGenerator;
 import reactor.core.publisher.Mono;
 

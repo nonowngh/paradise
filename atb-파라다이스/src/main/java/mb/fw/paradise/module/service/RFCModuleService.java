@@ -49,7 +49,7 @@ public class RFCModuleService {
 			JCoParameterList paramList = function.getImportParameterList();
 			JCoParameterList tableParamList = function.getTableParameterList();
 			DataItem dataItem = request.getDataItem();
-			JcoExecutor.importParms(dataItem.getParameter(), paramList, propertyList);
+			JcoExecutor.importParms(dataItem.getParam(), paramList, propertyList);
 			JcoExecutor.importTables(dataItem.getTable(), tableParamList, propertyList);
 			log.info("call function : {}", function.getName());
 			function.execute(jcoDestination);

@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import lombok.extern.slf4j.Slf4j;
 import mb.fw.paradise.api.model.InterfaceInfo;
 import mb.fw.paradise.api.model.PatternProperty;
 import mb.fw.paradise.api.model.SqlQuery;
@@ -30,7 +29,6 @@ import mb.fw.paradise.util.InterfaceInfoPropertyUtil;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-@Slf4j
 @Service
 @ConditionalOnAdaptorType(AdaptorType.DB)
 public class DBModuleService {

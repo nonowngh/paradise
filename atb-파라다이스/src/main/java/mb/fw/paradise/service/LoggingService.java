@@ -37,4 +37,5 @@ public class LoggingService {
 			log.error("JMS end logging error!!!", e);
 		}
 	}
+	
 }

@@ -3,11 +3,13 @@ package mb.fw.paradise.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.reactive.function.server.HandlerFilterFunction;
 import org.springframework.web.reactive.function.server.RequestPredicates;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import org.springframework.web.server.ResponseStatusException;
 
 import lombok.extern.slf4j.Slf4j;
 import mb.fw.paradise.config.annotaion.ConditionalOnAdaptorType;
@@ -99,13 +101,21 @@ public class ModuleRouterConfig {
 		return (request, next) -> {
 			long startTime = System.currentTimeMillis();
 			// 요청 정보 로그
-			log.info("[REQ] {} {} [Header Info] {}", request.methodName(), request.path(),request.headers().asHttpHeaders().toString());
+			log.info("[REQ] {} {} [Header Info] {}", request.methodName(), request.path(),
+					request.headers().asHttpHeaders().toString());
 			return next.handle(request).doOnSuccess(response -> {
 				long duration = System.currentTimeMillis() - startTime;
-				log.info("[RES] {} {} ({} ms)  [Header Info] {}", request.methodName(), request.path(), duration, response.headers());
+				log.info("[RES] {} {} {} ({} ms) [Header Info] {}", request.methodName(), request.path(),
+						response.statusCode(), duration, response.headers());
 			}).doOnError(e -> {
 				long duration = System.currentTimeMillis() - startTime;
-				log.error("[ERROR] {} {} ({} ms) - {}", request.methodName(), request.path(), duration, e.getMessage());
+				int status = 500; // default
+				if (e instanceof WebClientResponseException) {
+					status = ((WebClientResponseException) e).getRawStatusCode();
+				} else if (e instanceof ResponseStatusException) {
+					status = ((ResponseStatusException) e).getStatus().value();
+				}
+				log.error("[ERROR] {} {} {} ({} ms) - {}", request.methodName(), request.path(), status, duration, e.getMessage());
 			});
 		};
 	}

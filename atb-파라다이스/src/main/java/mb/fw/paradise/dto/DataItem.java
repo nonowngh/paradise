@@ -4,18 +4,22 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class DataItem {
 
 	LinkedHashMap<String, List<Map<String, Object>>> table;
 
-	LinkedHashMap<String, Map<String, Object>> structure;
+//	LinkedHashMap<String, Map<String, Object>> structure;
 
-	LinkedHashMap<String, Object> parameter;
+	LinkedHashMap<String, Object> param;
 
 //	@Data
 //	@Builder

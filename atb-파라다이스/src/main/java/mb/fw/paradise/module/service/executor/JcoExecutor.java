@@ -146,7 +146,7 @@ public class JcoExecutor {
 						tableName -> convertJCoTable(tableParamList.getTable(tableName)), (v1, v2) -> v1,
 						LinkedHashMap::new));
 
-		return DataItem.builder().parameter(resultParamMap).table(resultTableMap).build();
+		return DataItem.builder().param(resultParamMap).table(resultTableMap).build();
 	}
 
 	private static List<Map<String, Object>> convertJCoTable(JCoTable table) {

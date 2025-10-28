@@ -1,6 +1,8 @@
 package mb.fw.paradise.util;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -41,7 +43,7 @@ public class HttpHeaderUtil {
 			}
 		});
 		responseBuilder.header(ESBApiHeaderConstants.ESB_STATUS_CODE, ESBStatusConstants.SUCCESS);
-		responseBuilder.header(ESBApiHeaderConstants.ESB_STATUS_MESSAGE, "처리 성공");
+		responseBuilder.header(ESBApiHeaderConstants.ESB_STATUS_MESSAGE, Base64.getEncoder().encodeToString("처리 완료".getBytes(StandardCharsets.UTF_8)));
 		return responseBuilder;
 	}
 
@@ -59,7 +61,7 @@ public class HttpHeaderUtil {
 			}
 		});
 		responseBuilder.header(ESBApiHeaderConstants.ESB_STATUS_CODE, ESBStatusConstants.FAIL);
-		responseBuilder.header(ESBApiHeaderConstants.ESB_STATUS_MESSAGE, statusMessage);
+		responseBuilder.header(ESBApiHeaderConstants.ESB_STATUS_MESSAGE, Base64.getEncoder().encodeToString(statusMessage.getBytes(StandardCharsets.UTF_8)));
 		return responseBuilder;
 	}
 }
