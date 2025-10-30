@@ -1,40 +1,18 @@
 server:
-   port: 29000
+   port: 29100
 
 adaptor:
-   type: GATEWAY
-
+  type: INTERFACE_API
 spring:
-   cloud:
-      gateway:
-#      forwarded:
-         routes:
-         -  id: SAP-RFC-CALL
-#        enabled: true
-#      httpclient:
-#        wiretap: true
-            uri: http://localhost:8090 # 대상 서비스 URI
-            predicates:
-            - Path=/esb/api/gateway/sap/rfc-call # 요청 경로 조건
-            filters:
-            -  name: CommonRewritePath
-         -  id: PCB-DB-PROCESS
-            uri: http://localhost:8081 # 대상 서비스 URI
-            predicates:
-            - Path=/esb/api/gateway/pcb/db-process # 요청 경로 조건
-            filters:
-            -  name: CommonRewritePath
-         -  id: COM-DB-RCV-PROCESS
-            uri: http://localhost:28003 # 대상 서비스 URI
-            predicates:
-            - Path=/esb/api/gateway/com/rcv-db-* # 요청 경로 조건
-            filters:
-            -  name: CommonRewritePath
-   main:
-      web-application-type: reactive
-      allow-bean-definition-overriding: true
-   autoconfigure:
-      exclude:
-      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
-      - org.springframework.boot.autoconfigure.quartz.QuartzAutoConfiguration
+  main:
+    web-application-type: reactive
+    allow-bean-definition-overriding: true
+  autoconfigure:
+    exclude:
       - org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration
+      - org.springframework.boot.autoconfigure.quartz.QuartzAutoConfiguration
+mybatis:
+  mapper-locations: classpath:SQL_INTERFACE_INFO.xml
+  type-aliases-package: mb.fw.paradise.api.model
+  configuration:
+    map-underscore-to-camel-case: true

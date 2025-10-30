@@ -2,8 +2,10 @@ package mb.fw.paradise.module.service;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -82,22 +84,27 @@ public class DBModuleService {
 			List<PatternProperty> propertyList = new ArrayList<>(interfaceInfo.getPropertyList());
 			List<String> sendTableNameList = InterfaceInfoPropertyUtil.getValueList(propertyList,
 					InterfaceInfoPropertyConstants.SEND_TABLE_NAMES);
-			List<String> recvTableNameList = InterfaceInfoPropertyUtil.getValueList(propertyList,
-					InterfaceInfoPropertyConstants.RECV_TABLE_NAMES);
 			List<SqlQuery> queryList = new ArrayList<>(interfaceInfo.getSqlQueryList());
 			Map<String, Object> params = Stream
 					.of(new AbstractMap.SimpleEntry<>(ESBCommonFieldConstants.ESB_IF_ID,
 							interfaceInfo.getInterfaceId()),
 							new AbstractMap.SimpleEntry<>(ESBCommonFieldConstants.ESB_TX_ID, transactionId))
 					.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-			return DataItem.builder()
+			List<String> recvTableNameList = Optional.ofNullable(propertyList)
+					.filter(list -> InterfaceInfoPropertyUtil.existProperty(list, InterfaceInfoPropertyConstants.RECV_TABLE_NAMES))
+					.map(list -> InterfaceInfoPropertyUtil.getValueList(list, InterfaceInfoPropertyConstants.RECV_TABLE_NAMES))
+					.orElse(null);
+
+			return DataItem.builder().param((LinkedHashMap<String, Object>) Stream
+					.of(new AbstractMap.SimpleEntry<>(ESBCommonFieldConstants.ESB_TX_ID, transactionId)))
 					.table(sendQueryExecutor.getTableData(sendTableNameList, recvTableNameList, queryList, params))
 					.build();
 		}).subscribeOn(Schedulers.boundedElastic());
 	}
 
 	@Transactional
-	private APIResponseMessage transactionalProcess(InterfaceInfo interfaceInfo, APIRequestMessage request) throws Exception {
+	private APIResponseMessage transactionalProcess(InterfaceInfo interfaceInfo, APIRequestMessage request)
+			throws Exception {
 		String workType = InterfaceInfoPropertyUtil.getValue(new ArrayList<>(interfaceInfo.getPropertyList()),
 				InterfaceInfoPropertyConstants.DB_WORK_TYPE);
 		APIResponseMessage response = APIResponseMessage.builder().statusCode(ESBStatusConstants.SUCCESS)

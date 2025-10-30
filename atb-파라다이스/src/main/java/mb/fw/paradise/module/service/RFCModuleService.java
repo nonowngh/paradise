@@ -41,8 +41,6 @@ public class RFCModuleService {
 			List<PatternProperty> propertyList = new ArrayList<>(interfaceInfo.getPropertyList());
 			String functionName = InterfaceInfoPropertyUtil.getValue(propertyList,
 					InterfaceInfoPropertyConstants.RFC_FUNCTION_NAME);
-			List<String> exportTableList = InterfaceInfoPropertyUtil.getValueList(propertyList,
-					InterfaceInfoPropertyConstants.RFC_EXPORT_TABLE_NAMES);
 			JCoFunction function = jcoDestination.getRepository().getFunction(functionName);
 			if (function == null)
 				throw new RuntimeException("RFC Function not found! -> " + functionName);
@@ -53,8 +51,13 @@ public class RFCModuleService {
 			JcoExecutor.importTables(dataItem.getTable(), tableParamList, propertyList);
 			log.info("call function : {}", function.getName());
 			function.execute(jcoDestination);
-			DataItem resultItem = JcoExecutor.exportData(function.getExportParameterList(), tableParamList,
-					exportTableList);
+			DataItem resultItem = InterfaceInfoPropertyUtil.existProperty(propertyList,
+					InterfaceInfoPropertyConstants.RFC_EXPORT_TABLE_NAMES)
+							? JcoExecutor.exportData(function.getExportParameterList(), tableParamList,
+									InterfaceInfoPropertyUtil.getValueList(propertyList,
+											InterfaceInfoPropertyConstants.RFC_EXPORT_TABLE_NAMES))
+							: JcoExecutor.exportData(function.getExportParameterList(), tableParamList,
+									null);
 			return APIResponseMessage.builder().statusCode(ESBStatusConstants.SUCCESS)
 					.interfaceId(request.getInterfaceId()).transactionId(request.getTransactionId())
 					.dataCount(DataItemUtil.tableDataCount(resultItem)).resultItem(resultItem).build();

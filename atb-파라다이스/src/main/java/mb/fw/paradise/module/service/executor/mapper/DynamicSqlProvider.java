@@ -6,6 +6,7 @@ import java.util.Map;
 
 import lombok.extern.slf4j.Slf4j;
 import mb.fw.paradise.api.model.SqlQuery;
+import mb.fw.paradise.module.service.executor.exception.SqlNotFoundException;
 
 @Slf4j
 public class DynamicSqlProvider {
@@ -23,6 +24,6 @@ public class DynamicSqlProvider {
 		param.putAll(params);
 
 		return queryList.stream().filter(q -> sqlId.equals(q.getSqlId())).findFirst().map(SqlQuery::getQuery)
-				.orElseThrow(() -> new IllegalArgumentException("❌ SQL not found for sqlId: " + sqlId));
+				.orElseThrow(() -> new SqlNotFoundException(sqlId));
 	}
 }

@@ -29,10 +29,11 @@ public class LoggingService {
 
 	@Async
 	public void asyncEndLogging(JmsTemplate jmsTemplate, String interfaceId, String transactionId, int errorCount, String statusCode, String statusMessage) {
+		String nowDateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
 		log.debug("jms end logging[{}]", transactionId);
 		try {
 			ATBUtil.endLogging(jmsTemplate, interfaceId, transactionId, "",
-					errorCount, statusCode, statusMessage, null);
+					errorCount, statusCode, statusMessage, nowDateTime);
 		} catch (Exception e) {
 			log.error("JMS end logging error!!!", e);
 		}

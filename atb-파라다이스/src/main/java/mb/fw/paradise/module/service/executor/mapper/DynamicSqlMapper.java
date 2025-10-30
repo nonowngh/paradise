@@ -10,6 +10,7 @@ import org.apache.ibatis.annotations.InsertProvider;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.SelectProvider;
+import org.apache.ibatis.annotations.UpdateProvider;
 
 import mb.fw.paradise.api.model.SqlQuery;
 
@@ -24,5 +25,8 @@ public interface DynamicSqlMapper {
     
     @DeleteProvider(type = DynamicSqlProvider.class, method = "getSql")
     int executeDelete(@Param("queryList") List<SqlQuery> queryList, @Param("sqlId") String sqlId, @Param("params") @Nullable Map<String, Object> params);
+    
+    @UpdateProvider(type = DynamicSqlProvider.class, method = "getSql")
+    int executeUpdate(@Param("queryList") List<SqlQuery> queryList, @Param("sqlId") String sqlId, @Param("params") @Nullable Map<String, Object> params);
 }
 
