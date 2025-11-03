@@ -15,13 +15,14 @@ public class DynamicSqlProvider {
 	public String getSql(Map<String, Object> param) {
 		String sqlId = (String) param.get("sqlId");
 		List<SqlQuery> queryList = (List<SqlQuery>) param.get("queryList");
-		Map<String, Object> params = (Map<String, Object>) param.get("params");
-
-		log.debug("query excute parameter -> [{}]", params);
-		// params null 체크
-		if (params == null) params = Collections.emptyMap();
-
-		param.putAll(params);
+		
+		if(param.containsKey("params")) {
+			Map<String, Object> params = (Map<String, Object>) param.get("params");
+			log.debug("query excute parameter -> [{}]", params);
+			// params null 체크
+			if (params == null) params = Collections.emptyMap();
+			param.putAll(params);
+		}
 
 		return queryList.stream().filter(q -> sqlId.equals(q.getSqlId())).findFirst().map(SqlQuery::getQuery)
 				.orElseThrow(() -> new SqlNotFoundException(sqlId));

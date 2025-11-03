@@ -47,22 +47,21 @@ public class GatewayHeaderLoggingFilter implements GlobalFilter {
 		URI originalUri = (originalUris != null && !originalUris.isEmpty()) ? originalUris.iterator().next()
 				: exchange.getRequest().getURI();
 		URI requestUri = exchange.getAttribute(ServerWebExchangeUtils.GATEWAY_REQUEST_URL_ATTR);
-
-		log.info("Routing : [{}] ---> [{}]", originalUri, requestUri.toString());
+		ServerHttpRequest request = exchange.getRequest();
+		HttpHeaders requestHeader = request.getHeaders();
+		String interfaceId = HttpHeaderUtil.getHeader(requestHeader, ESBApiHeaderConstants.INTERFACE_ID);
+		String messageType = HttpHeaderUtil.getHeader(requestHeader, ESBApiHeaderConstants.API_MESSAGE_TYPE);
+		log.info("Routing '{}'[{}] : [{}] ---> [{}]", interfaceId, messageType, originalUri, requestUri.toString());
 
 		// ------------------------
 		// 요청 header 로깅
 		// ------------------------
-		ServerHttpRequest request = exchange.getRequest();
-		HttpHeaders requestHeader = request.getHeaders();
-		log.info("[HTTP 요청 헤더] : {}", requestHeader);
+		log.info("HTTP request header : {}", requestHeader);
 
-		exchange.getAttributes().put(ESBApiHeaderConstants.INTERFACE_ID,
-				HttpHeaderUtil.getHeader(requestHeader, ESBApiHeaderConstants.INTERFACE_ID));
+		exchange.getAttributes().put(ESBApiHeaderConstants.INTERFACE_ID, interfaceId);
 		exchange.getAttributes().put(ESBApiHeaderConstants.TRANSACTION_ID,
 				HttpHeaderUtil.getHeader(requestHeader, ESBApiHeaderConstants.TRANSACTION_ID));
-		exchange.getAttributes().put(ESBApiHeaderConstants.API_MESSAGE_TYPE,
-				HttpHeaderUtil.getHeader(requestHeader, ESBApiHeaderConstants.API_MESSAGE_TYPE));
+		exchange.getAttributes().put(ESBApiHeaderConstants.API_MESSAGE_TYPE, messageType);
 		exchange.getAttributes().put(ESBApiHeaderConstants.DATA_COUNT,
 				HttpHeaderUtil.getIntHeader(requestHeader, ESBApiHeaderConstants.DATA_COUNT));
 		exchange.getAttributes().put(ESBApiHeaderConstants.SEND_SYSTEM_CODE,
@@ -71,8 +70,11 @@ public class GatewayHeaderLoggingFilter implements GlobalFilter {
 				HttpHeaderUtil.getHeader(requestHeader, ESBApiHeaderConstants.RECEIVE_SYSTEM_CODE));
 		exchange.getAttributes().put(ESBApiHeaderConstants.ESB_STATUS_CODE,
 				HttpHeaderUtil.getHeader(requestHeader, ESBApiHeaderConstants.ESB_STATUS_CODE));
-		exchange.getAttributes().put(ESBApiHeaderConstants.ESB_STATUS_MESSAGE,
-				HttpHeaderUtil.getHeader(requestHeader, ESBApiHeaderConstants.ESB_STATUS_MESSAGE));
+		String statusMessage = HttpHeaderUtil.getHeader(requestHeader, ESBApiHeaderConstants.ESB_STATUS_MESSAGE);
+		if (HttpHeaderUtil.isBase64(statusMessage)) {
+			statusMessage = new String(Base64.getDecoder().decode(statusMessage), StandardCharsets.UTF_8);
+		}
+		exchange.getAttributes().put(ESBApiHeaderConstants.ESB_STATUS_MESSAGE, statusMessage);
 
 		ApiMessageType apiMessagType = ApiMessageType
 				.valueOf((String) exchange.getAttributes().get(ESBApiHeaderConstants.API_MESSAGE_TYPE));
@@ -88,26 +90,31 @@ public class GatewayHeaderLoggingFilter implements GlobalFilter {
 		response.beforeCommit(() -> {
 			HttpHeaders headers = response.getHeaders();
 			HttpStatus status = response.getStatusCode();
-			log.info("[HTTP 응답 헤더] : [{}] {}", status.toString(), headers);
+			log.info("HTTP response header : [{}] {}", status.toString(), headers);
 			return Mono.empty();
 		});
 
 		return chain.filter(exchange).doOnError(ex -> {
-			log.error("error!! {}", ex.getMessage(), ex);
+			log.error("target service call error!! {}", ex.getMessage(), ex);
 			exchange.getAttributes().put(ESBApiHeaderConstants.ESB_STATUS_CODE, ESBStatusConstants.FAIL);
 			exchange.getAttributes().put(ESBApiHeaderConstants.ESB_STATUS_MESSAGE, ex.getMessage());
 			processByHeaders(exchange.getAttributes(), false);
 		}).doOnSuccess(Void -> {
-			String encoded = exchange.getResponse().getHeaders().getFirst(ESBApiHeaderConstants.ESB_STATUS_MESSAGE);
-			if (encoded != null) {
-				String decoded = new String(Base64.getDecoder().decode(encoded), StandardCharsets.UTF_8);
-				log.debug("Decoded 'ESB_STATUS_MESSAGE' value: {}", decoded);
-				exchange.getAttributes().put(ESBApiHeaderConstants.ESB_STATUS_MESSAGE, decoded);
+			if (apiMessagType.equals(ApiMessageType.SYNC)) {
+				String encoded = exchange.getResponse().getHeaders().getFirst(ESBApiHeaderConstants.ESB_STATUS_MESSAGE);
+				if (encoded != null) {
+					String decoded = new String(Base64.getDecoder().decode(encoded), StandardCharsets.UTF_8);
+					log.debug("Decoded 'ESB_STATUS_MESSAGE' value: {}", decoded);
+					exchange.getAttributes().put(ESBApiHeaderConstants.ESB_STATUS_MESSAGE, decoded);
+				}
+				exchange.getAttributes().put(ESBApiHeaderConstants.ESB_STATUS_CODE, HttpHeaderUtil
+						.getHeader(exchange.getResponse().getHeaders(), ESBApiHeaderConstants.ESB_STATUS_CODE));
+				processByHeaders(exchange.getAttributes(), false);
+			} else {
+				processByHeaders(exchange.getAttributes(), false);
 			}
-			exchange.getAttributes().put(ESBApiHeaderConstants.ESB_STATUS_CODE, HttpHeaderUtil
-					.getHeader(exchange.getResponse().getHeaders(), ESBApiHeaderConstants.ESB_STATUS_CODE));
-			processByHeaders(exchange.getAttributes(), false);
 		});
+
 	}
 
 	private void processByHeaders(Map<String, Object> attributesMap, boolean isSyncRequest) {
@@ -122,12 +129,24 @@ public class GatewayHeaderLoggingFilter implements GlobalFilter {
 		ApiMessageType apiMessagType = ApiMessageType
 				.valueOf((String) attributesMap.get(ESBApiHeaderConstants.API_MESSAGE_TYPE));
 
-		// 동기, 비동기 요청 메시지
-		if (isSyncRequest || apiMessagType.equals(ApiMessageType.REQUEST)) {
+		// 동기 요청 메시지
+		if (isSyncRequest) {
 			jmsTemplate.ifPresent(jms -> {
 				loggingService.asyncStartLogging(jms, interfaceId, transactionId, sendSystemCode, receiveSystemCode,
 						dataCount);
 			});
+		}
+		// 비동기 요청 메시지(오류시 응답 메시지도 같이)
+		if (apiMessagType.equals(ApiMessageType.REQUEST)) {
+			jmsTemplate.ifPresent(jms -> {
+				loggingService.asyncStartLogging(jms, interfaceId, transactionId, sendSystemCode, receiveSystemCode,
+						dataCount);
+			});
+			if (!esbStatusCode.isEmpty() && ESBStatusConstants.FAIL.equals(esbStatusCode))
+				jmsTemplate.ifPresent(jms -> {
+					loggingService.asyncEndLogging(jms, interfaceId, transactionId, dataCount, esbStatusCode,
+							esbStatusMessage);
+				});
 		}
 		// 비동기 응답 메시지
 		else if (apiMessagType.equals(ApiMessageType.RESPONSE)) {
@@ -135,8 +154,9 @@ public class GatewayHeaderLoggingFilter implements GlobalFilter {
 				loggingService.asyncEndLogging(jms, interfaceId, transactionId, dataCount, esbStatusCode,
 						esbStatusMessage);
 			});
-			// 동기 응답 메시지
-		} else {
+		}
+		// 동기 응답 메시지
+		else {
 			jmsTemplate.ifPresent(jms -> {
 				loggingService.asyncEndLogging(jms, interfaceId, transactionId, dataCount, esbStatusCode,
 						esbStatusMessage);

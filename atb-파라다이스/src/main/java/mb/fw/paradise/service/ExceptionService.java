@@ -1,5 +1,8 @@
 package mb.fw.paradise.service;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 
@@ -8,6 +11,7 @@ import mb.fw.paradise.constants.ESBApiHeaderConstants;
 import mb.fw.paradise.constants.ESBStatusConstants;
 import mb.fw.paradise.dto.APIResponseMessage;
 import mb.fw.paradise.util.HttpHeaderUtil;
+import reactor.core.publisher.Mono;
 
 @Slf4j
 @Service
@@ -19,23 +23,20 @@ public class ExceptionService {
 		this.apiService = apiService;
 	}
 
-	public void receiveHandlerExceptionProcess(Throwable e, HttpHeaders headers) {
-		log.error("Handler error -> ", e);
-		apiService.callGatewayForResult(APIResponseMessage.builder()
-				.interfaceId(HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.INTERFACE_ID))
-				.transactionId(HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.TRANSACTION_ID))
-				.statusCode(ESBStatusConstants.FAIL).statusMessage(e.getMessage())
-				.dataCount(Integer.valueOf(HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.DATA_COUNT)))
-				.build(), HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.CALL_BACK_PATH));
+	public Mono<String> receiveHandlerExceptionProcess(Throwable e, String interfaceId, String transactionId,
+			int dataCount, String callBackPath) {
+		return apiService.callGatewayForResult(APIResponseMessage.builder().interfaceId(interfaceId)
+				.transactionId(transactionId).statusCode(ESBStatusConstants.FAIL)
+				.statusMessage(Base64.getEncoder().encodeToString(e.getMessage().getBytes(StandardCharsets.UTF_8)))
+				.dataCount(dataCount).build(), callBackPath);
 	}
-	
+
 	public APIResponseMessage syncExceptionProcess(Throwable e, HttpHeaders headers) {
 		log.error("Handler error -> ", e);
 		return APIResponseMessage.builder()
-				.interfaceId(HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.INTERFACE_ID))
-				.transactionId(HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.TRANSACTION_ID))
+				.interfaceId(HttpHeaderUtil.getHeaderIgnoreCase(headers, ESBApiHeaderConstants.INTERFACE_ID))
+				.transactionId(HttpHeaderUtil.getHeaderIgnoreCase(headers, ESBApiHeaderConstants.TRANSACTION_ID))
 				.statusCode(ESBStatusConstants.FAIL).statusMessage(e.getMessage())
-				.dataCount(Integer.valueOf(HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.DATA_COUNT)))
-				.build();
+				.dataCount(HttpHeaderUtil.getIntHeaderIgnoreCase(headers, ESBApiHeaderConstants.DATA_COUNT)).build();
 	}
 }

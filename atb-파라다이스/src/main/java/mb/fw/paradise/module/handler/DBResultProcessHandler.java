@@ -29,11 +29,14 @@ public class DBResultProcessHandler {
 				.switchIfEmpty(Mono.error(new IllegalArgumentException("요청 body가 존재하지 않습니다."))) // body 없을 때 에러 처리
 				.flatMap(response -> apiService.getInterfaceInfo(response.getInterfaceId())
 						.flatMap(interfaceInfo -> dbModuleService.dbResult(response, interfaceInfo) // DB 처리
-								.doOnNext(count -> log.info("[dbResultProcess] 업데이트 완료. 처리 건수: {}", count))))
+								.doOnNext(count -> log.debug("[dbResultProcess] 업데이트 완료. 처리 건수: {}", count))
+								.map(count -> response)))
 				.onErrorMap(error -> {
 					log.error("Error [dbResultProcess] -> {}", error.getMessage(), error); // 에러 처리
 					return new RuntimeException(error.getMessage(), error);
-				}).then(ServerResponse.ok().bodyValue("[dbResultProcess] 요청 수신 완료."));
+				}).doOnSuccess(response -> log.info("데이터 결과 수신 완료[{}], 상태 코드 : {}", response.getTransactionId(),
+						response.getStatusCode()))
+				.then(ServerResponse.ok().bodyValue("[dbResultProcess] 요청 수신 완료."));
 	}
 
 }

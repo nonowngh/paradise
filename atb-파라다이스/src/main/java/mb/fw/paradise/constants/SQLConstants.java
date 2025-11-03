@@ -10,7 +10,7 @@ public class SQLConstants {
 	
 	public static final String SQL_ID_INSERT = "INSERT";
 	
-	public static final String SQL_ID_UPDATE_REUSLT = "UPDATE_REUSLT";
+	public static final String SQL_ID_UPDATE_RESULT = "UPDATE_RESULT";
 	
 	public static final String SQL_ID_DELETE = "DELETE";
 

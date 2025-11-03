@@ -1,40 +1,42 @@
 server:
-   port: 29000
+  port: 29000
 
 adaptor:
-   type: GATEWAY
+  type: GATEWAY
 
 spring:
-   cloud:
-      gateway:
-#      forwarded:
-         routes:
-         -  id: SAP-RFC-CALL
-#        enabled: true
-#      httpclient:
-#        wiretap: true
-            uri: http://localhost:8090 # 대상 서비스 URI
-            predicates:
-            - Path=/esb/api/gateway/sap/rfc-call # 요청 경로 조건
-            filters:
-            -  name: CommonRewritePath
-         -  id: PCB-DB-PROCESS
-            uri: http://localhost:8081 # 대상 서비스 URI
-            predicates:
-            - Path=/esb/api/gateway/pcb/db-process # 요청 경로 조건
-            filters:
-            -  name: CommonRewritePath
-         -  id: COM-DB-RCV-PROCESS
-            uri: http://localhost:28003 # 대상 서비스 URI
-            predicates:
-            - Path=/esb/api/gateway/com/rcv-db-* # 요청 경로 조건
-            filters:
-            -  name: CommonRewritePath
-   main:
-      web-application-type: reactive
-      allow-bean-definition-overriding: true
-   autoconfigure:
-      exclude:
+  cloud:
+    gateway:
+      routes:
+        - id: SAP-RFC-CALL
+          uri: http://localhost:8090   # 대상 서비스 URI
+          predicates:
+            - Path=/esb/api/gateway/sap/rfc-call   # 요청 경로 조건
+          filters:
+            - name : CommonRewritePath
+        - id: PCB-DB-PROCESS
+          uri: http://localhost:28004   # 대상 서비스 URI
+          predicates:
+            - Path=/esb/api/gateway/pcb/rcv-db-*   # 요청 경로 조건
+          filters:
+            - name : CommonRewritePath
+        - id: COM-DB-RCV-PROCESS
+          uri: http://localhost:28003   # 대상 서비스 URI
+          predicates:
+            - Path=/esb/api/gateway/com/rcv-db-*   # 요청 경로 조건
+          filters:
+            - name : CommonRewritePath
+        - id: PAS-DB-PROCESS
+          uri: http://localhost:28004   # 대상 서비스 URI
+          predicates:
+            - Path=/esb/api/gateway/pas/result-db-*   # 요청 경로 조건
+          filters:
+            - name : CommonRewritePath
+  main:
+    web-application-type: reactive
+    allow-bean-definition-overriding: true
+  autoconfigure:
+    exclude:
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
       - org.springframework.boot.autoconfigure.quartz.QuartzAutoConfiguration
       - org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration

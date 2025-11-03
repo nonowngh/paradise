@@ -56,17 +56,19 @@ public class APIService {
 			headers.set(ESBApiHeaderConstants.CALL_BACK_PATH, callBackPath);
 			headers.set(ESBApiHeaderConstants.API_MESSAGE_TYPE, ApiMessageType.REQUEST.name());
 //			headers.set("Authorization", "Bearer " + )); // 토큰이 있는 경우
-		}).bodyValue(request).retrieve()
-				.onStatus(HttpStatus::isError,
-						clientResponse -> clientResponse.bodyToMono(String.class).flatMap(
-								errorBody -> Mono.error(new RuntimeException("데이터 전송 중 오류 발생 : " + errorBody))))
-				.bodyToMono(String.class).doOnTerminate(() -> {
-					log.info("데이터 전송 완료");
-				});
+		}).bodyValue(request).exchangeToMono(clientResponse -> {
+			if (clientResponse.statusCode().is2xxSuccessful()) {
+				return clientResponse.bodyToMono(String.class).defaultIfEmpty("처리 완료");
+			} else {
+				return clientResponse.bodyToMono(String.class)
+						.flatMap(errorBody -> Mono.error(new RuntimeException("데이터 전송 중 오류 발생 : " + errorBody)));
+			}
+		}).doOnSuccess(response -> log.info("데이터 전송 완료[{}]", request.getTransactionId())); // 성공일 때만 로그
+//				.doOnError(error -> log.error("데이터 전송 오류 발생: {}", error.getMessage(), error)); // 에러일 때 로그
 	}
 
 	public Mono<String> callGatewayForResult(APIResponseMessage response, String callbackPath) {
-		return gatewayWebClient.post().uri(callbackPath.toLowerCase()).headers(headers -> {
+		return gatewayWebClient.post().uri("/" + callbackPath.toLowerCase()).headers(headers -> {
 			headers.setContentType(MediaType.APPLICATION_JSON);
 			headers.set(ESBApiHeaderConstants.INTERFACE_ID, response.getInterfaceId());
 			headers.set(ESBApiHeaderConstants.TRANSACTION_ID, response.getTransactionId());
@@ -75,11 +77,19 @@ public class APIService {
 			headers.set(ESBApiHeaderConstants.DATA_COUNT, String.valueOf(response.getDataCount()));
 			headers.set(ESBApiHeaderConstants.API_MESSAGE_TYPE, ApiMessageType.RESPONSE.name());
 //			headers.set("Authorization", "Bearer " + )); // 토큰이 있는 경우
-		}).bodyValue(response).retrieve().bodyToMono(String.class).doOnError(error -> {
-			log.error("결과 전송 중 오류 발생 : " + error.getMessage());
-		}).doOnTerminate(() -> {
-			log.info("결과 전송 완료");
-		});
+		}).bodyValue(response).exchangeToMono(clientResponse -> {
+			if (clientResponse.statusCode().is2xxSuccessful()) {
+				return clientResponse.bodyToMono(String.class).defaultIfEmpty("처리 완료");
+			} else {
+				return clientResponse.bodyToMono(String.class)
+						.flatMap(errorBody -> Mono.error(new RuntimeException("결과 전송 중 오류 발생 : " + errorBody)));
+			}
+		}).doOnSuccess(result -> log.info("결과 전송 완료[{}]", response.getTransactionId())); // 성공일 때만 로그
+//				.bodyValue(response).retrieve().bodyToMono(String.class).doOnError(error -> {
+//			log.error("결과 전송 중 오류 발생 : " + error.getMessage());
+//		}).doOnSuccess(success -> {
+//			log.info("결과 전송 완료");
+//		});
 	}
 
 	public Mono<APIResponseMessage> callGatewaySync(APIRequestMessage request, String targetPath, String sendSystemCode,

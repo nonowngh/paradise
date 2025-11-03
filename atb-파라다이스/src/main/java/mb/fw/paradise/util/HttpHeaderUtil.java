@@ -10,11 +10,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
-import lombok.extern.slf4j.Slf4j;
 import mb.fw.paradise.constants.ESBApiHeaderConstants;
 import mb.fw.paradise.constants.ESBStatusConstants;
 
-@Slf4j
 public class HttpHeaderUtil {
 	public static String getHeader(HttpHeaders headers, String key) {
 		String value = headers.getFirst(key);
@@ -28,6 +26,24 @@ public class HttpHeaderUtil {
 		} catch (NumberFormatException e) {
 			return 0;
 		}
+	}
+	
+	public static int getIntHeaderIgnoreCase(HttpHeaders headers, String key) {
+	    String value = getHeaderIgnoreCase(headers, key);
+	    try {
+	        return Integer.parseInt(value);
+	    } catch (NumberFormatException e) {
+	        return 0;
+	    }
+	}
+	
+	public static String getHeaderIgnoreCase(HttpHeaders headers, String key) {
+	    for (String headerName : headers.keySet()) {
+	        if (headerName.equalsIgnoreCase(key)) {
+	            return headers.getFirst(headerName);
+	        }
+	    }
+	    return ""; // 없으면 빈 문자열 반환
 	}
 
 	public static ServerResponse.BodyBuilder makeDefaultOkResponseHeader(HttpHeaders requestHeader) {
@@ -63,5 +79,20 @@ public class HttpHeaderUtil {
 		responseBuilder.header(ESBApiHeaderConstants.ESB_STATUS_CODE, ESBStatusConstants.FAIL);
 		responseBuilder.header(ESBApiHeaderConstants.ESB_STATUS_MESSAGE, Base64.getEncoder().encodeToString(statusMessage.getBytes(StandardCharsets.UTF_8)));
 		return responseBuilder;
+	}
+	
+	public static boolean isBase64(String str) {
+	    if (str == null || str.isEmpty()) {
+	        return false;
+	    }
+
+	    try {
+	        // 실제로 디코딩 시도
+	        Base64.getDecoder().decode(str);
+	        return true;
+	    } catch (IllegalArgumentException e) {
+	        // 디코딩 실패 → Base64 아님
+	        return false;
+	    }
 	}
 }

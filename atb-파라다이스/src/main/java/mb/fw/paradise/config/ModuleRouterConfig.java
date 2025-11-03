@@ -31,11 +31,11 @@ import mb.fw.paradise.util.HttpHeaderUtil;
 public class ModuleRouterConfig {
 
 	private final ExceptionService exceptionService;
-	private final ModuleConfig config;
+//	private final ModuleConfig config;
 
 	public ModuleRouterConfig(ExceptionService exceptionService, ModuleConfig config) {
 		this.exceptionService = exceptionService;
-		this.config = config;
+//		this.config = config;
 	}
 
 	@Bean
@@ -71,7 +71,14 @@ public class ModuleRouterConfig {
 						.equals(HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.API_MESSAGE_TYPE))) {
 					return ServerResponse.status(500).bodyValue(exceptionService.syncExceptionProcess(e, headers));
 				} else {
-					exceptionService.receiveHandlerExceptionProcess(e, headers);
+					String callBackPath = HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.CALL_BACK_PATH);
+					String interfaceId = HttpHeaderUtil.getHeaderIgnoreCase(headers,
+							ESBApiHeaderConstants.INTERFACE_ID);
+					String transactionId = HttpHeaderUtil.getHeaderIgnoreCase(headers,
+							ESBApiHeaderConstants.TRANSACTION_ID);
+					int dataCount = HttpHeaderUtil.getIntHeaderIgnoreCase(headers, ESBApiHeaderConstants.DATA_COUNT);
+					exceptionService.receiveHandlerExceptionProcess(e, interfaceId, transactionId, dataCount,
+							callBackPath);
 					return ServerResponse.noContent().build();
 				}
 			});
@@ -115,28 +122,28 @@ public class ModuleRouterConfig {
 				} else if (e instanceof ResponseStatusException) {
 					status = ((ResponseStatusException) e).getStatus().value();
 				}
-				log.error("[ERROR] {} {} {} ({} ms) - {}", request.methodName(), request.path(), status, duration, e.getMessage());
+				log.error("[ERROR] {} {} {} ({} ms) - {}", request.methodName(), request.path(), status, duration,
+						e.getMessage());
 			});
 		};
 	}
 
-	private HandlerFilterFunction<ServerResponse, ServerResponse> checkAllowInterfaceList() {
-		return (request, next) -> {
-			HttpHeaders headers = request.headers().asHttpHeaders();
-			String interfaceId = HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.INTERFACE_ID);
-			boolean allowed = config.getInterfaceList().stream().anyMatch(id -> id.equals(interfaceId));
-			if (!allowed) {
-				Exception e = new Exception("등록되지 않은 인터페이스 아이디 -> " + interfaceId);
-				if (ApiMessageType.SYNC.name()
-						.equals(HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.API_MESSAGE_TYPE))) {
-					return ServerResponse.status(500).bodyValue(e.getMessage());
-				} else {
-					exceptionService.receiveHandlerExceptionProcess(e, headers);
-					return ServerResponse.noContent().build();
-				}
-			}
-			return next.handle(request);
-		};
-	}
-
+//	private HandlerFilterFunction<ServerResponse, ServerResponse> checkAllowInterfaceList() {
+//		return (request, next) -> {
+//			HttpHeaders headers = request.headers().asHttpHeaders();
+//			String interfaceId = HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.INTERFACE_ID);
+//			boolean allowed = config.getInterfaceList().stream().anyMatch(id -> id.equals(interfaceId));
+//			if (!allowed) {
+//				Exception e = new Exception("등록되지 않은 인터페이스 아이디 -> " + interfaceId);
+//				if (ApiMessageType.SYNC.name()
+//						.equals(HttpHeaderUtil.getHeader(headers, ESBApiHeaderConstants.API_MESSAGE_TYPE))) {
+//					return ServerResponse.status(500).bodyValue(e.getMessage());
+//				} else {
+//					exceptionService.receiveHandlerExceptionProcess(e, headers);
+//					return ServerResponse.ok().build();
+//				}
+//			}
+//			return next.handle(request);
+//		};
+//	}
 }
