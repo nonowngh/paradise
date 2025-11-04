@@ -23,6 +23,9 @@ public interface DynamicSqlMapper {
     @InsertProvider(type = DynamicSqlProvider.class, method = "getSql")
     int executeInsertList(@Param("queryList") List<SqlQuery> queryList, @Param("sqlId") String sqlId, @Param("list") List<Map<String, Object>> dataList);
     
+    @InsertProvider(type = DynamicSqlProvider.class, method = "getSql")
+    int executeInsert(@Param("queryList") List<SqlQuery> queryList, @Param("sqlId") String sqlId, @Param("params") Map<String, Object> params);
+    
     @DeleteProvider(type = DynamicSqlProvider.class, method = "getSql")
     int executeDelete(@Param("queryList") List<SqlQuery> queryList, @Param("sqlId") String sqlId, @Param("params") @Nullable Map<String, Object> params);
     

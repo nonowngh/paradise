@@ -13,7 +13,6 @@ import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import mb.fw.paradise.api.model.InterfaceInfo;
 import mb.fw.paradise.api.model.PatternProperty;
@@ -21,15 +20,13 @@ import mb.fw.paradise.api.model.SqlQuery;
 import mb.fw.paradise.config.annotaion.ConditionalOnAdaptorType;
 import mb.fw.paradise.constants.AdaptorType;
 import mb.fw.paradise.constants.ESBCommonFieldConstants;
-import mb.fw.paradise.constants.ESBStatusConstants;
 import mb.fw.paradise.constants.InterfaceInfoPropertyConstants;
 import mb.fw.paradise.constants.SQLConstants;
 import mb.fw.paradise.dto.APIRequestMessage;
 import mb.fw.paradise.dto.APIResponseMessage;
 import mb.fw.paradise.dto.DataItem;
-import mb.fw.paradise.module.service.executor.ReceiveQueryExecutor;
 import mb.fw.paradise.module.service.executor.SendQueryExecutor;
-import mb.fw.paradise.util.DataItemUtil;
+import mb.fw.paradise.module.service.executor.TransactionalExecutor;
 import mb.fw.paradise.util.HttpHeaderUtil;
 import mb.fw.paradise.util.InterfaceInfoPropertyUtil;
 import reactor.core.publisher.Mono;
@@ -40,13 +37,13 @@ import reactor.core.scheduler.Schedulers;
 public class DBModuleService {
 
 	@Autowired
-	private ReceiveQueryExecutor receiveQueryExecutor;
-
-	@Autowired
 	private SendQueryExecutor sendQueryExecutor;
+	
+	@Autowired
+	private TransactionalExecutor transactionalExecutor;
 
 	public Mono<APIResponseMessage> dbProcessAndResponse(InterfaceInfo interfaceInfo, APIRequestMessage request) {
-		return Mono.fromCallable(() -> transactionalProcess(interfaceInfo, request))
+		return Mono.fromCallable(() -> transactionalExecutor.transactionalProcess(interfaceInfo, request))
 				.subscribeOn(Schedulers.boundedElastic()) // 블로킹 작업 안전 처리
 				.onErrorResume(e -> {
 					return Mono.error(new RuntimeException("DB 처리 실패: " + e.getMessage(), e));
@@ -66,7 +63,8 @@ public class DBModuleService {
 					new AbstractMap.SimpleEntry<>(ESBCommonFieldConstants.ESB_IF_ID, response.getInterfaceId()),
 					new AbstractMap.SimpleEntry<>(ESBCommonFieldConstants.ESB_TX_ID, response.getTransactionId()),
 					new AbstractMap.SimpleEntry<>(ESBCommonFieldConstants.ESB_STATUS_CD, response.getStatusCode()),
-					new AbstractMap.SimpleEntry<>(ESBCommonFieldConstants.ESB_STATUS_MSG, statusMessage))
+					new AbstractMap.SimpleEntry<>(ESBCommonFieldConstants.ESB_STATUS_MSG,
+							statusMessage == null ? "" : statusMessage))
 					.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 			return sendQueryExecutor.update(sendTableNameList, queryList, params, SQLConstants.SQL_ID_UPDATE_RESULT);
 		}).subscribeOn(Schedulers.boundedElastic());
@@ -110,40 +108,6 @@ public class DBModuleService {
 					.getTableData(sendTableNameList, recvTableNameList, queryList, params, SQLConstants.SQL_ID_SELECT))
 					.build();
 		}).subscribeOn(Schedulers.boundedElastic());
-	}
-
-	@Transactional(rollbackFor = Exception.class)
-	private APIResponseMessage transactionalProcess(InterfaceInfo interfaceInfo, APIRequestMessage request)
-			throws Exception {
-		String workType = InterfaceInfoPropertyUtil.getValue(new ArrayList<>(interfaceInfo.getPropertyList()),
-				InterfaceInfoPropertyConstants.DB_WORK_TYPE);
-		APIResponseMessage response = APIResponseMessage.builder().statusCode(ESBStatusConstants.SUCCESS)
-				.interfaceId(request.getInterfaceId()).transactionId(request.getTransactionId())
-				.dataCount(request.getDataCount()).build();
-		for (char ch : workType.toCharArray()) {
-			switch (ch) {
-			case 'D':
-				receiveQueryExecutor.processDelete(interfaceInfo, request);
-				break;
-			case 'I':
-				receiveQueryExecutor.processInsert(interfaceInfo, request);
-				break;
-//				case 'U':
-//					receiveQueryExecutor.processUpdateQueries(interfaceInfo, request);
-//					break;
-//				case 'P':
-//					receiveQueryExecutor.processProcedureQueries(interfaceInfo, request);
-//					break;
-			case 'S':
-				DataItem resultItem = receiveQueryExecutor.processSelect(interfaceInfo, request);
-				response.setResultItem(resultItem);
-				response.setDataCount(DataItemUtil.tableDataCount(resultItem));
-				break;
-			default:
-				throw new IllegalArgumentException("Invalid 'workType' : " + ch);
-			}
-		}
-		return response;
 	}
 
 }
