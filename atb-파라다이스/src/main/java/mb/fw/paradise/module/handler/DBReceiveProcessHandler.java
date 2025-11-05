@@ -41,7 +41,6 @@ public class DBReceiveProcessHandler {
 				ESBApiHeaderConstants.TRANSACTION_ID);
 		int dataCount = HttpHeaderUtil.getIntHeaderIgnoreCase(serverRequest.headers().asHttpHeaders(),
 				ESBApiHeaderConstants.DATA_COUNT);
-		// 요청을 바로 수신 → 즉시 200 응답 반환
 		Mono<ServerResponse> immediateResponse = ServerResponse.ok().bodyValue("[dbProcess] 요청 수신 완료.");
 		serverRequest.bodyToMono(APIRequestMessage.class)
 				// body 없으면 예외 발생 → RouterFunction 예외 핸들러로 전달

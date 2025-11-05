@@ -26,7 +26,6 @@ import mb.fw.paradise.dto.APIRequestMessage;
 import mb.fw.paradise.dto.APIResponseMessage;
 import mb.fw.paradise.dto.DataItem;
 import mb.fw.paradise.module.service.executor.SendQueryExecutor;
-import mb.fw.paradise.module.service.executor.TransactionalExecutor;
 import mb.fw.paradise.util.HttpHeaderUtil;
 import mb.fw.paradise.util.InterfaceInfoPropertyUtil;
 import reactor.core.publisher.Mono;
@@ -40,10 +39,10 @@ public class DBModuleService {
 	private SendQueryExecutor sendQueryExecutor;
 	
 	@Autowired
-	private TransactionalExecutor transactionalExecutor;
+	private TransactionalService transactionalService;
 
 	public Mono<APIResponseMessage> dbProcessAndResponse(InterfaceInfo interfaceInfo, APIRequestMessage request) {
-		return Mono.fromCallable(() -> transactionalExecutor.transactionalProcess(interfaceInfo, request))
+		return Mono.fromCallable(() -> transactionalService.transactionalProcess(interfaceInfo, request))
 				.subscribeOn(Schedulers.boundedElastic()) // 블로킹 작업 안전 처리
 				.onErrorResume(e -> {
 					return Mono.error(new RuntimeException("DB 처리 실패: " + e.getMessage(), e));

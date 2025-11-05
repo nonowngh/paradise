@@ -1,4 +1,4 @@
-package mb.fw.paradise.module.service.executor;
+package mb.fw.paradise.module.service;
 
 import java.util.ArrayList;
 
@@ -14,12 +14,13 @@ import mb.fw.paradise.constants.InterfaceInfoPropertyConstants;
 import mb.fw.paradise.dto.APIRequestMessage;
 import mb.fw.paradise.dto.APIResponseMessage;
 import mb.fw.paradise.dto.DataItem;
+import mb.fw.paradise.module.service.executor.ReceiveQueryExecutor;
 import mb.fw.paradise.util.DataItemUtil;
 import mb.fw.paradise.util.InterfaceInfoPropertyUtil;
 
 @Service
 @ConditionalOnAdaptorType(AdaptorType.DB)
-public class TransactionalExecutor {
+public class TransactionalService {
 
 	@Autowired
 	private ReceiveQueryExecutor receiveQueryExecutor;
