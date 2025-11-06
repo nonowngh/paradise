@@ -2,11 +2,13 @@ package mb.fw.paradise.module.service;
 
 import java.util.ArrayList;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.mybatis.spring.SqlSessionTemplate;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import mb.fw.paradise.api.model.InterfaceInfo;
+import mb.fw.paradise.config.MyBatisConfig;
 import mb.fw.paradise.config.annotaion.ConditionalOnAdaptorType;
 import mb.fw.paradise.constants.AdaptorType;
 import mb.fw.paradise.constants.ESBStatusConstants;
@@ -22,38 +24,51 @@ import mb.fw.paradise.util.InterfaceInfoPropertyUtil;
 @ConditionalOnAdaptorType(AdaptorType.DB)
 public class TransactionalService {
 
-	@Autowired
-	private ReceiveQueryExecutor receiveQueryExecutor;
+	private final ReceiveQueryExecutor receiveQueryExecutor;
+	private final SqlSessionTemplate batchSqlSessionTemplate;
+	private final SqlSessionTemplate simpleSqlSessionTemplate;
+	private final MyBatisConfig config;
+
+	public TransactionalService(ReceiveQueryExecutor receiveQueryExecutor, MyBatisConfig config,
+			@Qualifier("batchSqlSessionTemplate") SqlSessionTemplate batchSqlSessionTemplate,
+			@Qualifier("simpleSqlSessionTemplate") SqlSessionTemplate simpleSqlSessionTemplate) {
+		this.receiveQueryExecutor = receiveQueryExecutor;
+		this.simpleSqlSessionTemplate = simpleSqlSessionTemplate;
+		this.config = config;
+		this.batchSqlSessionTemplate = batchSqlSessionTemplate;
+	}
 
 	@Transactional(rollbackFor = Exception.class)
 	public APIResponseMessage transactionalProcess(InterfaceInfo interfaceInfo, APIRequestMessage request)
 			throws Exception {
 		String workType = InterfaceInfoPropertyUtil.getValue(new ArrayList<>(interfaceInfo.getPropertyList()),
 				InterfaceInfoPropertyConstants.DB_WORK_TYPE);
+		int dataCount = request.getDataCount();
+		SqlSessionTemplate sessionTemplate = dataCount >= config.getThresholdCount() ? batchSqlSessionTemplate
+				: simpleSqlSessionTemplate;
 		APIResponseMessage response = APIResponseMessage.builder().statusCode(ESBStatusConstants.SUCCESS)
 				.statusMessage("처리완료").interfaceId(request.getInterfaceId()).transactionId(request.getTransactionId())
-				.dataCount(request.getDataCount()).build();
+				.dataCount(dataCount).build();
 		for (char ch : workType.toCharArray()) {
 			switch (ch) {
 			case 'D':
-				receiveQueryExecutor.processDelete(interfaceInfo, request);
+				receiveQueryExecutor.processDelete(interfaceInfo, request, sessionTemplate);
 				break;
 			case 'I':
-				receiveQueryExecutor.processInsert(interfaceInfo, request);
+				if (sessionTemplate == batchSqlSessionTemplate) {
+					receiveQueryExecutor.processBatchInsert(interfaceInfo, request, sessionTemplate, config.getBatchSize());
+				} else {
+					receiveQueryExecutor.processInsert(interfaceInfo, request, sessionTemplate);
+				}
 				break;
-//				case 'U':
-//					receiveQueryExecutor.processUpdateQueries(interfaceInfo, request);
-//					break;
-//				case 'P':
-//					receiveQueryExecutor.processProcedureQueries(interfaceInfo, request);
-//					break;
 			case 'S':
-				DataItem resultItem = receiveQueryExecutor.processSelect(interfaceInfo, request);
+				DataItem resultItem = receiveQueryExecutor.processSelect(interfaceInfo, request,
+						simpleSqlSessionTemplate);
 				response.setResultItem(resultItem);
 				response.setDataCount(DataItemUtil.tableDataCount(resultItem));
 				break;
 			default:
-				throw new IllegalArgumentException("Invalid 'workType' : " + ch);
+				throw new IllegalArgumentException("Invalid 'workType': " + ch);
 			}
 		}
 		return response;

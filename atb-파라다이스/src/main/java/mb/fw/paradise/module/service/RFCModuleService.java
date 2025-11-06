@@ -1,7 +1,9 @@
 package mb.fw.paradise.module.service;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
@@ -36,7 +38,7 @@ public class RFCModuleService {
 		this.jcoDestination = jcoDestination;
 	}
 
-	public Mono<APIResponseMessage> rfcCallAndResponse(InterfaceInfo interfaceInfo, APIRequestMessage request) {
+	public Mono<APIResponseMessage> rfcCallForReceive(InterfaceInfo interfaceInfo, APIRequestMessage request) {
 		return Mono.fromCallable(() -> {
 			List<PatternProperty> propertyList = new ArrayList<>(interfaceInfo.getPropertyList());
 			String functionName = InterfaceInfoPropertyUtil.getValue(propertyList,
@@ -51,13 +53,9 @@ public class RFCModuleService {
 			JcoExecutor.importTables(dataItem.getTable(), tableParamList, propertyList);
 			log.info("call function : {}", function.getName());
 			function.execute(jcoDestination);
-			DataItem resultItem = InterfaceInfoPropertyUtil.existProperty(propertyList,
-					InterfaceInfoPropertyConstants.RFC_EXPORT_TABLE_NAMES)
-							? JcoExecutor.exportData(function.getExportParameterList(), tableParamList,
-									InterfaceInfoPropertyUtil.getValueList(propertyList,
-											InterfaceInfoPropertyConstants.RFC_EXPORT_TABLE_NAMES))
-							: JcoExecutor.exportData(function.getExportParameterList(), tableParamList,
-									null);
+			DataItem resultItem = JcoExecutor.exportData(function.getExportParameterList(), tableParamList,
+					propertyList);
+			log.info("rfc call result item : {}", resultItem);
 			return APIResponseMessage.builder().statusCode(ESBStatusConstants.SUCCESS)
 					.interfaceId(request.getInterfaceId()).transactionId(request.getTransactionId())
 					.dataCount(DataItemUtil.tableDataCount(resultItem)).resultItem(resultItem).build();
@@ -65,7 +63,35 @@ public class RFCModuleService {
 				.onErrorResume(e -> {
 					return Mono.error(new RuntimeException("RFC 처리 실패: " + e.getMessage(), e));
 				});
+	}
 
+	public Mono<DataItem> rfcCallForSend(InterfaceInfo interfaceInfo, String transactionId) {
+		return Mono.fromCallable(() -> {
+			List<PatternProperty> propertyList = new ArrayList<>(interfaceInfo.getPropertyList());
+			String functionName = InterfaceInfoPropertyUtil.getValue(propertyList,
+					InterfaceInfoPropertyConstants.RFC_FUNCTION_NAME);
+			JCoFunction function = jcoDestination.getRepository().getFunction(functionName);
+			if (function == null)
+				throw new RuntimeException("RFC Function not found! -> " + functionName);
+			Map<String, Object> importParamMap = new LinkedHashMap<>();
+			if (InterfaceInfoPropertyUtil.existProperty(propertyList,
+					InterfaceInfoPropertyConstants.RFC_IMPORT_FIXED_PARAMETER)) {
+				importParamMap = InterfaceInfoPropertyUtil.getValueMap(propertyList,
+						InterfaceInfoPropertyConstants.RFC_IMPORT_FIXED_PARAMETER);
+			}
+			JCoParameterList paramList = function.getImportParameterList();
+			JCoParameterList tableParamList = function.getTableParameterList();
+			log.info("rfc call request data : {}", importParamMap);
+			JcoExecutor.importParms((LinkedHashMap<String, Object>) importParamMap, paramList, propertyList);
+			log.info("call function : {}", function.getName());
+			function.execute(jcoDestination);
+//			log.info("rfc call return data : {}", dataItem);
+			return JcoExecutor.exportData(function.getExportParameterList(), tableParamList, propertyList);
+		}).subscribeOn(Schedulers.boundedElastic());
+	}
+
+	public Mono<String> rfcResult(APIResponseMessage response, InterfaceInfo interfaceInfo) {
+		return Mono.just("RFC result process complete...");
 	}
 
 }

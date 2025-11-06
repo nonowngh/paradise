@@ -17,6 +17,8 @@ public class TargetContextPathConstants {
     
     public static final String RESULT_DB_PROCESS = "/result-db-process";
     
+    public static final String RESULT_RFC_PROCESS = "/result-rfc-process";
+
     public static final String RCV_API_CALL = "/rcv-api-call";
     
     public static final String SND_COMMON_API = "/snd-common-api";

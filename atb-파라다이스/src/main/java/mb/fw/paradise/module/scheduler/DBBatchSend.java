@@ -22,14 +22,14 @@ import mb.fw.paradise.util.TransactionGenerator;
 import reactor.core.publisher.Mono;
 
 @Slf4j
-@Component("dbPollingAndSend")
+@Component("DBBatchSend")
 @ConditionalOnAdaptorType(AdaptorType.DB)
-public class DBPollingAndSend implements BatchModule {
+public class DBBatchSend implements BatchModule {
 
 	private final APIService apiService;
 	private final DBModuleService dbModuleService;
 
-	public DBPollingAndSend(APIService apiService, DBModuleService dbModuleService) {
+	public DBBatchSend(APIService apiService, DBModuleService dbModuleService) {
 		this.apiService = apiService;
 		this.dbModuleService = dbModuleService;
 	}

@@ -1,10 +1,10 @@
 package mb.fw.paradise.module.service.executor;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -35,18 +35,14 @@ public class JcoExecutor {
 
 				// table-name mapping
 				if (InterfaceInfoPropertyUtil.existProperty(propertyList,
-						InterfaceInfoPropertyConstants.RFC_TABLE_MAPPINGS)) {
-					String mappingStr = InterfaceInfoPropertyUtil.getValue(propertyList,
-							InterfaceInfoPropertyConstants.RFC_TABLE_MAPPINGS);
-					Map<String, String> mappingMap = Arrays.stream(mappingStr.split(","))
-							.map(pair -> pair.split(":", 2))
-							.collect(Collectors.toMap(arr -> arr[0].trim(), arr -> arr[1].trim()));
-					mappingMap.forEach((beforeTableName, afterTableName) -> {
+						InterfaceInfoPropertyConstants.TABLE_NAME_MAPPINGS)) {
+					Map<String, Object> dbRfcTableMapping = InterfaceInfoPropertyUtil.getValueMap(propertyList,
+							InterfaceInfoPropertyConstants.TABLE_NAME_MAPPINGS);
+					dbRfcTableMapping.forEach((beforeTableName, afterTableName) -> {
 						if (tableItem.containsKey(beforeTableName)) {
 							List<Map<String, Object>> valueList = tableItem.remove(beforeTableName); // 기존 key 제거하면서
-																										// value
-																										// 추출
-							tableItem.put(afterTableName, valueList);
+																										// value 추출
+							tableItem.put((String) afterTableName, valueList);
 						}
 
 					});
@@ -153,18 +149,40 @@ public class JcoExecutor {
 	}
 
 	public static DataItem exportData(JCoParameterList exportParamList, JCoParameterList tableParamList,
-			List<String> exportTableList) {
-		//set export parameter
-		LinkedHashMap<String, Object> resultParamMap = IntStream.range(0, exportParamList.getFieldCount()).boxed()
-				.collect(Collectors.toMap(i -> exportParamList.getMetaData().getName(i),
-						i -> exportParamList.getValue(i), (v1, v2) -> v1, LinkedHashMap::new));
-		//set export table
-		LinkedHashMap<String, List<Map<String, Object>>> resultTableMap = Optional.ofNullable(exportTableList)
-				.map(list -> list.stream()
-						.collect(Collectors.toMap(Function.identity(),
-								tableName -> convertJCoTable(tableParamList.getTable(tableName)), (v1, v2) -> v1,
-								LinkedHashMap::new)))
-				.orElseGet(LinkedHashMap::new);
+			List<PatternProperty> propertyList) {
+		// get export table-name
+		List<String> exportTableList = InterfaceInfoPropertyUtil.existProperty(propertyList,
+				InterfaceInfoPropertyConstants.RFC_EXPORT_TABLE_NAMES)
+						? InterfaceInfoPropertyUtil.getValueList(propertyList,
+								InterfaceInfoPropertyConstants.RFC_EXPORT_TABLE_NAMES)
+						: Collections.emptyList();
+
+		// set export parameter
+		LinkedHashMap<String, Object> resultParamMap = exportParamList != null && exportParamList.getFieldCount() > 0
+				? IntStream.range(0, exportParamList.getFieldCount()).boxed()
+						.collect(Collectors.toMap(i -> exportParamList.getMetaData().getName(i),
+								i -> exportParamList.getValue(i), (v1, v2) -> v1, LinkedHashMap::new))
+				: new LinkedHashMap<>();
+
+		// set export table
+		LinkedHashMap<String, List<Map<String, Object>>> resultTableMap = new LinkedHashMap<>();
+		if (!exportTableList.isEmpty() && tableParamList != null) {
+			resultTableMap = exportTableList.stream()
+					.collect(Collectors.toMap(Function.identity(),
+							tableName -> convertJCoTable(tableParamList.getTable(tableName)), (v1, v2) -> v1,
+							LinkedHashMap::new));
+			// rfc -> db table name mapping
+			if (InterfaceInfoPropertyUtil.existProperty(propertyList,
+					InterfaceInfoPropertyConstants.TABLE_NAME_MAPPINGS)) {
+				Map<String, Object> rfcDBTableNameMappings = InterfaceInfoPropertyUtil.getValueMap(propertyList,
+						InterfaceInfoPropertyConstants.TABLE_NAME_MAPPINGS);
+				resultTableMap = new LinkedHashMap<>(
+						resultTableMap.entrySet().stream().collect(Collectors.toMap(entry -> {
+							Object mapped = rfcDBTableNameMappings.getOrDefault(entry.getKey(), entry.getKey());
+							return mapped != null ? mapped.toString() : entry.getKey();
+						}, entry -> entry.getValue(), (v1, v2) -> v1)));
+			}
+		}
 		return DataItem.builder().param(resultParamMap).table(resultTableMap).build();
 	}
 

@@ -21,7 +21,8 @@ import mb.fw.paradise.constants.TargetContextPathConstants;
 import mb.fw.paradise.module.handler.DBReceiveProcessHandler;
 import mb.fw.paradise.module.handler.DBResultProcessHandler;
 import mb.fw.paradise.module.handler.ESBAPIServletHandler;
-import mb.fw.paradise.module.handler.RFCCallHandler;
+import mb.fw.paradise.module.handler.RFCReceiveHandler;
+import mb.fw.paradise.module.handler.RFCResultProcessHandler;
 import mb.fw.paradise.service.ExceptionService;
 import mb.fw.paradise.util.HttpHeaderUtil;
 
@@ -30,17 +31,21 @@ import mb.fw.paradise.util.HttpHeaderUtil;
 @ConditionalOnAdaptorType(value = { AdaptorType.INTERFACE_API, AdaptorType.GATEWAY }, negate = true)
 public class ModuleRouterConfig {
 
+	private final RFCResultProcessHandler RFCResultProcessHandler;
+
 	private final ExceptionService exceptionService;
 //	private final ModuleConfig config;
 
-	public ModuleRouterConfig(ExceptionService exceptionService, ModuleConfig config) {
+	public ModuleRouterConfig(ExceptionService exceptionService, ModuleConfig config,
+			RFCResultProcessHandler RFCResultProcessHandler) {
 		this.exceptionService = exceptionService;
+		this.RFCResultProcessHandler = RFCResultProcessHandler;
 //		this.config = config;
 	}
 
 	@Bean
 	RouterFunction<ServerResponse> receiveRoutes(DBReceiveProcessHandler dbProcessHandler,
-			RFCCallHandler rfcCallHandler) {
+			RFCReceiveHandler rfcCallHandler) {
 
 		String rootPath = TargetContextPathConstants.DEFAULT_PATH + "/" + AdaptorConstants.MY_SYSTEM_CODE.toLowerCase();
 		return RouterFunctions.route()
@@ -54,11 +59,12 @@ public class ModuleRouterConfig {
 
 	@Bean
 	RouterFunction<ServerResponse> sendRoutes(DBResultProcessHandler dbResultProcessHandler,
-			ESBAPIServletHandler esbAPIServletHandler) {
+			RFCResultProcessHandler rfcResultProcessHandler, ESBAPIServletHandler esbAPIServletHandler) {
 		String rootPath = TargetContextPathConstants.DEFAULT_PATH + "/" + AdaptorConstants.MY_SYSTEM_CODE.toLowerCase();
-		return RouterFunctions.route().nest(RequestPredicates.path(rootPath),
-				builder -> builder
+		return RouterFunctions.route()
+				.nest(RequestPredicates.path(rootPath), builder -> builder
 						.POST(TargetContextPathConstants.RESULT_DB_PROCESS, dbResultProcessHandler::dbResultProcess)
+						.POST(TargetContextPathConstants.RESULT_RFC_PROCESS, rfcResultProcessHandler::rfcResultProcess)
 						.POST(TargetContextPathConstants.SND_COMMON_API, esbAPIServletHandler::callGateway))
 				.build().filter(logRequestAndResponse()).filter(moduleResultExceptionHandler());
 	}

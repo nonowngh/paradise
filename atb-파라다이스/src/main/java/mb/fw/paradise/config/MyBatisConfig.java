@@ -12,6 +12,7 @@ import lombok.Getter;
 import lombok.Setter;
 import mb.fw.paradise.config.annotaion.ConditionalOnAdaptorType;
 import mb.fw.paradise.constants.AdaptorType;
+import mb.fw.paradise.module.service.executor.mapper.DynamicSqlMapper;
 
 @Configuration
 @ConditionalOnAdaptorType(AdaptorType.DB)
@@ -33,4 +34,5 @@ public class MyBatisConfig {
     SqlSessionTemplate batchSqlSessionTemplate(SqlSessionFactory sqlSessionFactory) {
         return new SqlSessionTemplate(sqlSessionFactory, ExecutorType.BATCH);
     }
+    
 }

@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.mybatis.spring.SqlSessionTemplate;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import lombok.extern.slf4j.Slf4j;
@@ -28,18 +27,9 @@ import mb.fw.paradise.util.InterfaceInfoPropertyUtil;
 @ConditionalOnAdaptorType(AdaptorType.DB)
 public class ReceiveQueryExecutor {
 
-	private final DynamicSqlMapper dynamicQueryMapper;
-	private final MyBatisConfig config;
-	private final SqlSessionTemplate batchSqlSessionTemplate;
-
-	public ReceiveQueryExecutor(DynamicSqlMapper dynamicQueryMapper, MyBatisConfig config,
-			@Qualifier("batchSqlSessionTemplate") SqlSessionTemplate batchSqlSessionTemplate) {
-		this.dynamicQueryMapper = dynamicQueryMapper;
-		this.config = config;
-		this.batchSqlSessionTemplate = batchSqlSessionTemplate;
-	}
-
-	public void processDelete(InterfaceInfo interfaceInfo, APIRequestMessage request) {
+	public void processDelete(InterfaceInfo interfaceInfo, APIRequestMessage request,
+			SqlSessionTemplate sqlSessionTemplate) {
+		DynamicSqlMapper dynamicQueryMapper = sqlSessionTemplate.getMapper(DynamicSqlMapper.class);
 		List<SqlQuery> queryList = new ArrayList<>(interfaceInfo.getSqlQueryList());
 		LinkedHashMap<String, List<Map<String, Object>>> tableData = request.getDataItem().getTable();
 		LinkedHashMap<String, Object> param = request.getDataItem().getParam();
@@ -50,17 +40,35 @@ public class ReceiveQueryExecutor {
 		});
 	}
 
-	public void processInsert(InterfaceInfo interfaceInfo, APIRequestMessage request) {
+	public void processInsert(InterfaceInfo interfaceInfo, APIRequestMessage request,
+			SqlSessionTemplate sqlSessionTemplate) {
+		DynamicSqlMapper dynamicQueryMapper = sqlSessionTemplate.getMapper(DynamicSqlMapper.class);
 		List<SqlQuery> queryList = new ArrayList<>(interfaceInfo.getSqlQueryList());
 		LinkedHashMap<String, List<Map<String, Object>>> tableData = request.getDataItem().getTable();
 		tableData.forEach((tableName, data) -> {
 			String expectedSqlId = SQLConstants.SQL_ID_INSERT + "." + tableName;
-			int excuteCount = batchInsert(queryList, expectedSqlId, data);
+			int excuteCount = 0;
+			for (Map<String, Object> item : data) {
+				excuteCount += dynamicQueryMapper.executeInsert(queryList, expectedSqlId, item);
+			}
 			log.info("insert table '{}' / count : {}", tableName, excuteCount);
 		});
 	}
 
-	public DataItem processSelect(InterfaceInfo interfaceInfo, APIRequestMessage request) throws Exception {
+	public void processBatchInsert(InterfaceInfo interfaceInfo, APIRequestMessage request,
+			SqlSessionTemplate sqlSessionTemplate, int batchSize) {
+		List<SqlQuery> queryList = new ArrayList<>(interfaceInfo.getSqlQueryList());
+		LinkedHashMap<String, List<Map<String, Object>>> tableData = request.getDataItem().getTable();
+		tableData.forEach((tableName, data) -> {
+			String expectedSqlId = SQLConstants.SQL_ID_INSERT + "." + tableName;
+			int excuteCount = batchInsert(queryList, expectedSqlId, data, sqlSessionTemplate, batchSize);
+			log.info("insert(batch) table '{}' / count : {}", tableName, excuteCount);
+		});
+	}
+
+	public DataItem processSelect(InterfaceInfo interfaceInfo, APIRequestMessage request,
+			SqlSessionTemplate sqlSessionTemplate) throws Exception {
+		DynamicSqlMapper dynamicQueryMapper = sqlSessionTemplate.getMapper(DynamicSqlMapper.class);
 		List<SqlQuery> queryList = new ArrayList<>(interfaceInfo.getSqlQueryList());
 		LinkedHashMap<String, Object> param = request.getDataItem().getParam();
 		List<PatternProperty> propertyList = new ArrayList<>(interfaceInfo.getPropertyList());
@@ -83,30 +91,21 @@ public class ReceiveQueryExecutor {
 		return DataItem.builder().table(returnTableMap).param(param).build();
 	}
 
-	public int batchInsert(List<SqlQuery> queryList, String queryId, List<Map<String, Object>> dataList) {
+	public int batchInsert(List<SqlQuery> queryList, String queryId, List<Map<String, Object>> dataList,
+			SqlSessionTemplate batchSqlSessionTemplate, int batchSize) {
 		int totalInserted = 0;
-
 		if (dataList == null || dataList.isEmpty()) {
 			return totalInserted;
 		}
-
-		if (dataList.size() <= config.getThresholdCount()) {
-			for (Map<String, Object> item : dataList) {
-				totalInserted += dynamicQueryMapper.executeInsert(queryList, queryId, item);
-			}
-		} else {
-			try {
+		try {
 			// batchSize 단위로 처리
 			int fromIndex = 0;
 			int dataSize = dataList.size();
-			int batchSize = config.getBatchSize();
-
 			// batch용 Mapper
 			DynamicSqlMapper batchMapper = batchSqlSessionTemplate.getMapper(DynamicSqlMapper.class);
 			while (fromIndex < dataSize) {
 				int toIndex = Math.min(fromIndex + batchSize, dataSize);
 				List<Map<String, Object>> subList = dataList.subList(fromIndex, toIndex);
-
 				// 단건 반복, ExecutorType.BATCH 적용
 				for (Map<String, Object> item : subList) {
 					totalInserted += batchMapper.executeInsert(queryList, queryId, item);
@@ -115,11 +114,9 @@ public class ReceiveQueryExecutor {
 			}
 			// flush statements
 			batchSqlSessionTemplate.flushStatements();
-			}catch(Exception e) {
-				throw e;
-			}
+		} catch (Exception e) {
+			throw e;
 		}
-
 		return totalInserted;
 	}
 

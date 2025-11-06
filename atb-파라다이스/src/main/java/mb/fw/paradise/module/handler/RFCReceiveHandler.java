@@ -19,7 +19,7 @@ import reactor.core.publisher.Mono;
 
 @Slf4j
 @Component
-public class RFCCallHandler {
+public class RFCReceiveHandler {
 
 	@Autowired(required = false)
 	RFCModuleService rfcModuleService;
@@ -27,7 +27,7 @@ public class RFCCallHandler {
 	private final APIService apiService;
 	private final ExceptionService exceptionService;
 
-	public RFCCallHandler(APIService apiService, ExceptionService exceptionService) {
+	public RFCReceiveHandler(APIService apiService, ExceptionService exceptionService) {
 		this.apiService = apiService;
 		this.exceptionService = exceptionService;
 	}
@@ -37,7 +37,7 @@ public class RFCCallHandler {
 		return serverRequest.bodyToMono(APIRequestMessage.class)
 				.switchIfEmpty(Mono.error(new IllegalArgumentException("요청 body가 존재하지 않습니다."))) // body 없을 때 에러 처리
 				.flatMap(request -> apiService.getInterfaceInfo(request.getInterfaceId()).flatMap(
-						interfaceInfo -> rfcModuleService.rfcCallAndResponse(interfaceInfo, request).flatMap(result -> {
+						interfaceInfo -> rfcModuleService.rfcCallForReceive(interfaceInfo, request).flatMap(result -> {
 							return HttpHeaderUtil.makeDefaultOkResponseHeader(requestHeader).bodyValue(result);
 						})))
 				.onErrorResume(error -> {
@@ -68,7 +68,7 @@ public class RFCCallHandler {
 				// body 없으면 예외 발생 → RouterFunction 예외 핸들러로 전달
 				.switchIfEmpty(Mono.error(new IllegalArgumentException("요청 body가 존재하지 않습니다."))).flatMap(request -> {
 					apiService.getInterfaceInfo(request.getInterfaceId())
-							.flatMap(interfaceInfo -> rfcModuleService.rfcCallAndResponse(interfaceInfo, request)
+							.flatMap(interfaceInfo -> rfcModuleService.rfcCallForReceive(interfaceInfo, request)
 									.flatMap(result -> apiService.callGatewayForResult(result, callBackPath)))
 							.doOnSuccess(result -> log.info("[rfcProcess] 비동기 처리 완료")).onErrorResume(error -> {
 								log.error("[rfcProcess] 비동기 처리 중 예외 발생: {}", error.getMessage(), error);

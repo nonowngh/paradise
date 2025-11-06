@@ -15,12 +15,14 @@ public class InterfaceInfoPropertyConstants {
 
 	public static final String DB_WORK_TYPE = "DB_WORK_TYPE";
 
+	public static final String TABLE_NAME_MAPPINGS = "TABLE_NAME_MAPPINGS";
+	
 	public static final String RFC_FUNCTION_NAME = "RFC_FUNCTION_NAME";
-
-	public static final String RFC_TABLE_MAPPINGS = "RFC_TABLE_MAPPINGS";
 
 	public static final String RFC_PARAMETER_MAPPINGS = "RFC_PARAMETER_MAPPINGS";
 
+	public static final String RFC_IMPORT_FIXED_PARAMETER = "RFC_IMPORT_FIXED_PARAMETER";
+	
 	public static final String RFC_EXPORT_TABLE_NAMES = "RFC_EXPORT_TABLE_NAMES";
 
 	public static final String RFC_IMPORT_TABLE_NAMES = "RFC_IMPORT_TABLE_NAMES";
