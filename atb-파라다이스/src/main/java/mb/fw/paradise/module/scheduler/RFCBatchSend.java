@@ -27,6 +27,8 @@ public class RFCBatchSend implements BatchModule {
 	private final APIService apiService;
 	private final RFCModuleService rfcModuleService;
 
+	public static int chunkSize = 1000;
+
 	public RFCBatchSend(APIService apiService, RFCModuleService rfcModuleService) {
 		this.apiService = apiService;
 		this.rfcModuleService = rfcModuleService;
@@ -49,10 +51,18 @@ public class RFCBatchSend implements BatchModule {
 				if (dataCount == 0)
 					return Mono.empty();
 				log.info("Rfc export data count -> " + dataCount);
-				return apiService.callGateway(
-						APIRequestMessage.builder().interfaceId(interfaceId).transactionId(transactionId)
-								.dataItem(dataItem).dataCount(dataCount).build(),
-						targetPath, interfaceInfo.getSndSystemCode(), interfaceInfo.getRcvSystemCode(), callBackPath);
+				if (dataCount < chunkSize)
+					return apiService.callGateway(
+							APIRequestMessage.builder().interfaceId(interfaceId).transactionId(transactionId)
+									.dataItem(dataItem).dataCount(dataCount).build(),
+							targetPath, interfaceInfo.getSndSystemCode(), interfaceInfo.getRcvSystemCode(),
+							callBackPath);
+				else
+					return apiService.callGatewayLargeData(
+							APIRequestMessage.builder().interfaceId(interfaceId).transactionId(transactionId)
+									.dataItem(dataItem).dataCount(dataCount).build(),
+							targetPath, interfaceInfo.getSndSystemCode(), interfaceInfo.getRcvSystemCode(),
+							callBackPath, chunkSize);
 			}).switchIfEmpty(Mono.fromRunnable(() -> log.info("조회 데이터 없음")));
 		}).doOnError(error -> log.error("오류 발생: {}", error.getMessage(), error))
 //		.onErrorResume(error -> {
@@ -61,7 +71,7 @@ public class RFCBatchSend implements BatchModule {
 //							.statusCode(ESBStatusConstants.FAIL).statusMessage(error.getMessage()).build(),
 //					interfaceRef.get()).then(Mono.empty());
 //		})
-		.doFinally(signalType -> log.info("Batch scheduler end '{}' -> [{}]", interfaceId, transactionId))
+				.doFinally(signalType -> log.info("Batch scheduler end '{}' -> [{}]", interfaceId, transactionId))
 				.subscribe(result -> log.debug("result -> {}", result));
 	}
 }

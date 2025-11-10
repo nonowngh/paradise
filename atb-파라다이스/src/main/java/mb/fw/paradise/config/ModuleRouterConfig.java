@@ -31,15 +31,11 @@ import mb.fw.paradise.util.HttpHeaderUtil;
 @ConditionalOnAdaptorType(value = { AdaptorType.INTERFACE_API, AdaptorType.GATEWAY }, negate = true)
 public class ModuleRouterConfig {
 
-	private final RFCResultProcessHandler RFCResultProcessHandler;
-
 	private final ExceptionService exceptionService;
 //	private final ModuleConfig config;
 
-	public ModuleRouterConfig(ExceptionService exceptionService, ModuleConfig config,
-			RFCResultProcessHandler RFCResultProcessHandler) {
+	public ModuleRouterConfig(ExceptionService exceptionService) {
 		this.exceptionService = exceptionService;
-		this.RFCResultProcessHandler = RFCResultProcessHandler;
 //		this.config = config;
 	}
 

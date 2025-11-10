@@ -1,5 +1,7 @@
 package mb.fw.paradise.module.handler;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
@@ -14,7 +16,9 @@ import mb.fw.paradise.dto.APIResponseMessage;
 import mb.fw.paradise.module.service.DBModuleService;
 import mb.fw.paradise.service.APIService;
 import mb.fw.paradise.service.ExceptionService;
+import mb.fw.paradise.util.DataItemUtil;
 import mb.fw.paradise.util.HttpHeaderUtil;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Slf4j
@@ -30,37 +34,6 @@ public class DBReceiveProcessHandler {
 	public DBReceiveProcessHandler(APIService apiService, ExceptionService exceptionService) {
 		this.apiService = apiService;
 		this.exceptionService = exceptionService;
-	}
-
-	public Mono<ServerResponse> dbProcess(ServerRequest serverRequest) {
-		String callBackPath = HttpHeaderUtil.getHeader(serverRequest.headers().asHttpHeaders(),
-				ESBApiHeaderConstants.CALL_BACK_PATH);
-		String interfaceId = HttpHeaderUtil.getHeaderIgnoreCase(serverRequest.headers().asHttpHeaders(),
-				ESBApiHeaderConstants.INTERFACE_ID);
-		String transactionId = HttpHeaderUtil.getHeaderIgnoreCase(serverRequest.headers().asHttpHeaders(),
-				ESBApiHeaderConstants.TRANSACTION_ID);
-		int dataCount = HttpHeaderUtil.getIntHeaderIgnoreCase(serverRequest.headers().asHttpHeaders(),
-				ESBApiHeaderConstants.DATA_COUNT);
-		Mono<ServerResponse> immediateResponse = ServerResponse.ok().bodyValue("[dbProcess] 요청 수신 완료.");
-		serverRequest.bodyToMono(APIRequestMessage.class)
-				// body 없으면 예외 발생 → RouterFunction 예외 핸들러로 전달
-				.switchIfEmpty(Mono.error(new IllegalArgumentException("요청 body가 존재하지 않습니다."))).flatMap(request -> {
-					// 내부 비동기 처리
-					apiService.getInterfaceInfo(request.getInterfaceId())
-							.flatMap(interfaceInfo -> dbModuleService.dbProcessAndResponse(interfaceInfo, request)
-									.flatMap(result -> apiService.callGatewayForResult(result, callBackPath)))
-							.doOnSuccess(result -> log.info("[dbProcess] 비동기 처리 완료")).onErrorResume(error -> {
-								log.error("[dbProcess] 비동기 처리 중 예외 발생: {}", error.getMessage(), error);
-								// 예외 처리 Mono를 체인에 포함 → onErrorDropped 방지
-								return exceptionService.receiveHandlerExceptionProcess(error, interfaceId,
-										transactionId, dataCount, callBackPath).onErrorResume(err -> {
-											log.error("[dbProcess] 예외 처리 전송 실패", err);
-											return Mono.empty(); // 에러 무시
-										}).then(Mono.empty());
-							}).subscribe();
-					return Mono.empty();
-				}).subscribe(); // 비동기 처리
-		return immediateResponse;
 	}
 
 	public Mono<ServerResponse> dbSyncProcess(ServerRequest serverRequest) {
@@ -84,5 +57,47 @@ public class DBReceiveProcessHandler {
 											ESBApiHeaderConstants.DATA_COUNT))
 									.statusCode(ESBStatusConstants.FAIL).statusMessage(error.getMessage()).build());
 				});
+	}
+
+	public Mono<ServerResponse> dbProcess(ServerRequest serverRequest) {
+		String callBackPath = HttpHeaderUtil.getHeader(serverRequest.headers().asHttpHeaders(),
+				ESBApiHeaderConstants.CALL_BACK_PATH);
+		String interfaceId = HttpHeaderUtil.getHeader(serverRequest.headers().asHttpHeaders(),
+				ESBApiHeaderConstants.INTERFACE_ID);
+		String transactionId = HttpHeaderUtil.getHeader(serverRequest.headers().asHttpHeaders(),
+				ESBApiHeaderConstants.TRANSACTION_ID);
+		int dataCount = HttpHeaderUtil.getIntHeader(serverRequest.headers().asHttpHeaders(),
+				ESBApiHeaderConstants.DATA_COUNT);
+		Mono<ServerResponse> immediateResponse = ServerResponse.ok().bodyValue("[dbProcess] 요청 수신 완료.");
+
+		List<String> contentTypes = serverRequest.headers().header(HttpHeaders.CONTENT_TYPE);
+		boolean isNdjson = contentTypes.stream().anyMatch(t -> t.toLowerCase().contains("ndjson"));
+		// 대량 데이터 처리
+		Flux<APIRequestMessage> requestFlux;
+		if (isNdjson) {
+			log.info("Large data process..");
+			requestFlux = DataItemUtil.parseNdjsonGzip(serverRequest);
+		} else {
+			requestFlux = serverRequest.bodyToMono(APIRequestMessage.class)
+					.switchIfEmpty(Mono.error(new IllegalArgumentException("요청 body가 존재하지 않습니다."))).flux();
+		}
+
+		requestFlux.flatMap(request -> processRequest(request, callBackPath)).onErrorResume(error -> {
+			log.error("[dbProcess] 처리 중 오류 발생: transactionId={}, 오류 메시지 : {}", transactionId, error.getMessage(),
+					error);
+			return exceptionService
+					.receiveHandlerExceptionProcess(error, interfaceId, transactionId, dataCount, callBackPath)
+					.then(Mono.empty());
+		}).subscribe(); // 별도 쓰레드에서 비동기 실행
+
+		return immediateResponse;
+	}
+
+	private Mono<Void> processRequest(APIRequestMessage request, String callBackPath) {
+		return apiService.getInterfaceInfo(request.getInterfaceId())
+				.flatMap(interfaceInfo -> dbModuleService.dbProcessAndResponse(interfaceInfo, request)
+						.flatMap(result -> apiService.callGatewayForResult(result, callBackPath)))
+				.doOnSuccess(result -> log.info("[dbProcess] 처리 완료: transactionId={}", request.getTransactionId()))
+				.then(); // Mono<Void>
 	}
 }

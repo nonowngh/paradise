@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.apache.log4j.MDC;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
@@ -51,7 +52,9 @@ public class GatewayHeaderLoggingFilter implements GlobalFilter {
 		HttpHeaders requestHeader = request.getHeaders();
 		String interfaceId = HttpHeaderUtil.getHeader(requestHeader, ESBApiHeaderConstants.INTERFACE_ID);
 		String messageType = HttpHeaderUtil.getHeader(requestHeader, ESBApiHeaderConstants.API_MESSAGE_TYPE);
-		log.info("Routing '{}'[{}] : [{}] ---> [{}]", interfaceId, messageType, originalUri, requestUri.toString());
+		String transactionId = HttpHeaderUtil.getHeader(requestHeader, ESBApiHeaderConstants.TRANSACTION_ID);
+		MDC.put("esbTxId", transactionId);
+		log.info("Routing [{}] : '{}' ---> '{}'", messageType, originalUri, requestUri.toString());
 
 		// ------------------------
 		// 요청 header 로깅
@@ -59,8 +62,7 @@ public class GatewayHeaderLoggingFilter implements GlobalFilter {
 		log.info("HTTP request header : {}", requestHeader);
 
 		exchange.getAttributes().put(ESBApiHeaderConstants.INTERFACE_ID, interfaceId);
-		exchange.getAttributes().put(ESBApiHeaderConstants.TRANSACTION_ID,
-				HttpHeaderUtil.getHeader(requestHeader, ESBApiHeaderConstants.TRANSACTION_ID));
+		exchange.getAttributes().put(ESBApiHeaderConstants.TRANSACTION_ID, transactionId);
 		exchange.getAttributes().put(ESBApiHeaderConstants.API_MESSAGE_TYPE, messageType);
 		exchange.getAttributes().put(ESBApiHeaderConstants.DATA_COUNT,
 				HttpHeaderUtil.getIntHeader(requestHeader, ESBApiHeaderConstants.DATA_COUNT));
@@ -86,14 +88,20 @@ public class GatewayHeaderLoggingFilter implements GlobalFilter {
 		// 응답 header 로깅
 		// ------------------------
 		ServerHttpResponse response = exchange.getResponse();
-
-		response.beforeCommit(() -> {
-			HttpHeaders headers = response.getHeaders();
-			HttpStatus status = response.getStatusCode();
-			log.info("HTTP response header : [{}] {}", status.toString(), headers);
+		response.beforeCommit(() -> Mono.deferContextual(ctx -> {
+			if (transactionId != null) {
+				MDC.put("esbTxId", transactionId);
+			}
+			try {
+				HttpHeaders headers = response.getHeaders();
+				HttpStatus status = response.getStatusCode();
+				log.info("HTTP response header : [{}] {}", status.toString(), headers);
+			} finally {
+				MDC.remove("esbTxId");
+			}
 			return Mono.empty();
-		});
-
+		}));
+		
 		return chain.filter(exchange).doOnError(ex -> {
 			log.error("target service call error!! {}", ex.getMessage(), ex);
 			exchange.getAttributes().put(ESBApiHeaderConstants.ESB_STATUS_CODE, ESBStatusConstants.FAIL);
@@ -113,7 +121,7 @@ public class GatewayHeaderLoggingFilter implements GlobalFilter {
 			} else {
 				processByHeaders(exchange.getAttributes(), false);
 			}
-		});
+		}).doFinally(signal -> MDC.remove("esbTxId"));
 
 	}
 

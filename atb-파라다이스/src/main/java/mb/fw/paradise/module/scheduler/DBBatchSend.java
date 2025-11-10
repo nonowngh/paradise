@@ -28,6 +28,8 @@ public class DBBatchSend implements BatchModule {
 
 	private final APIService apiService;
 	private final DBModuleService dbModuleService;
+	
+	public static int chunkSize = 1000;
 
 	public DBBatchSend(APIService apiService, DBModuleService dbModuleService) {
 		this.apiService = apiService;
@@ -54,12 +56,20 @@ public class DBBatchSend implements BatchModule {
 				String callBackPath = interfaceInfo.getSndSystemCode() + TargetContextPathConstants.RESULT_DB_PROCESS;
 				return dbModuleService.getSendData(interfaceInfo, transactionId).flatMap(dataItem -> {
 					int dataCount = DataItemUtil.tableDataCount(dataItem);
-					if (dataCount == 0) return Mono.empty();
-					return apiService.callGateway(
-							APIRequestMessage.builder().interfaceId(interfaceId).transactionId(transactionId)
-									.dataItem(dataItem).dataCount(dataCount).build(),
-							targetPath, interfaceInfo.getSndSystemCode(), interfaceInfo.getRcvSystemCode(),
-							callBackPath);
+					if (dataCount == 0)
+						return Mono.empty();
+					if (dataCount < chunkSize)
+						return apiService.callGateway(
+								APIRequestMessage.builder().interfaceId(interfaceId).transactionId(transactionId)
+										.dataItem(dataItem).dataCount(dataCount).build(),
+								targetPath, interfaceInfo.getSndSystemCode(), interfaceInfo.getRcvSystemCode(),
+								callBackPath);
+					else
+						return apiService.callGatewayLargeData(
+								APIRequestMessage.builder().interfaceId(interfaceId).transactionId(transactionId)
+										.dataItem(dataItem).dataCount(dataCount).build(),
+								targetPath, interfaceInfo.getSndSystemCode(), interfaceInfo.getRcvSystemCode(),
+								callBackPath, chunkSize);
 				}).switchIfEmpty(Mono.fromRunnable(() -> log.info("조회 데이터 없음")));
 			});
 		}).doOnError(error -> log.error("오류 발생: {}", error.getMessage(), error)).onErrorResume(error -> {

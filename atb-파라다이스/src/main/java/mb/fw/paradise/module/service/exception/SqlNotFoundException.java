@@ -1,4 +1,4 @@
-package mb.fw.paradise.module.service.executor.exception;
+package mb.fw.paradise.module.service.exception;
 
 public class SqlNotFoundException extends RuntimeException {
     /**

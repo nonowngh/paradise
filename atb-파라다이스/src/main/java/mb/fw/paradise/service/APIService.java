@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.NoSuchElementException;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,8 @@ import mb.fw.paradise.constants.ESBStatusConstants;
 import mb.fw.paradise.dto.APIRequestMessage;
 import mb.fw.paradise.dto.APIResponseMessage;
 import mb.fw.paradise.gateway.exception.CustomGatewayException;
+import mb.fw.paradise.util.DataItemUtil;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
@@ -129,6 +132,32 @@ public class APIService {
 										.statusCode(ESBStatusConstants.FAIL).statusMessage(error).build()));
 					});
 		}).bodyToMono(APIResponseMessage.class).doOnSuccess(response -> log.info("데이터 전송 완료 - 응답 바디 : {}", response));
+	}
+
+	public Mono<String> callGatewayLargeData(APIRequestMessage request, String targetPath, String sendSystemCode,
+			String receiveSystemCode, String callBackPath, int chunkSize) {
+		Flux<APIRequestMessage> dataFlux = DataItemUtil.chunkLargeData(request, chunkSize);
+		Mono<byte[]> gzippedData = DataItemUtil.gzipNDJSON(dataFlux);
+
+		return gatewayWebClient.post().uri("/" + targetPath.toLowerCase()).headers(headers -> {
+			headers.setContentType(MediaType.APPLICATION_NDJSON);
+			headers.set(HttpHeaders.CONTENT_ENCODING, "gzip");
+			headers.set(ESBApiHeaderConstants.INTERFACE_ID, request.getInterfaceId());
+			headers.set(ESBApiHeaderConstants.TRANSACTION_ID, request.getTransactionId());
+			headers.set(ESBApiHeaderConstants.SEND_SYSTEM_CODE, sendSystemCode);
+			headers.set(ESBApiHeaderConstants.RECEIVE_SYSTEM_CODE, receiveSystemCode);
+			headers.set(ESBApiHeaderConstants.DATA_COUNT, String.valueOf(request.getDataCount()));
+			headers.set(ESBApiHeaderConstants.CALL_BACK_PATH, callBackPath);
+			headers.set(ESBApiHeaderConstants.API_MESSAGE_TYPE, ApiMessageType.REQUEST.name());
+//			headers.set("Authorization", "Bearer " + )); // 토큰이 있는 경우
+		}).body(gzippedData, byte[].class).exchangeToMono(clientResponse -> {
+			if (clientResponse.statusCode().is2xxSuccessful()) {
+				return clientResponse.bodyToMono(String.class).defaultIfEmpty("처리 완료");
+			} else {
+				return clientResponse.bodyToMono(String.class)
+						.flatMap(errorBody -> Mono.error(new RuntimeException("데이터 전송 중 오류 발생 : " + errorBody)));
+			}
+		}).doOnSuccess(response -> log.info("데이터 전송 완료[{}]", request.getTransactionId())); // 성공일 때만 로그
 	}
 
 }

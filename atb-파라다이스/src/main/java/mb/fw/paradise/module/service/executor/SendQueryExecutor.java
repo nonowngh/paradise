@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import mb.fw.paradise.api.model.SqlQuery;
 import mb.fw.paradise.config.annotaion.ConditionalOnAdaptorType;
 import mb.fw.paradise.constants.AdaptorType;
-import mb.fw.paradise.module.service.executor.exception.SqlNotFoundException;
+import mb.fw.paradise.module.service.exception.SqlNotFoundException;
 import mb.fw.paradise.module.service.executor.mapper.DynamicSqlMapper;
 
 @Slf4j

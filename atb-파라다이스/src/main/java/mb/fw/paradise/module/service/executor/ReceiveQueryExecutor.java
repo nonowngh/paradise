@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.ibatis.session.ExecutorType;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.stereotype.Service;
 
@@ -12,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import mb.fw.paradise.api.model.InterfaceInfo;
 import mb.fw.paradise.api.model.PatternProperty;
 import mb.fw.paradise.api.model.SqlQuery;
-import mb.fw.paradise.config.MyBatisConfig;
 import mb.fw.paradise.config.annotaion.ConditionalOnAdaptorType;
 import mb.fw.paradise.constants.AdaptorType;
 import mb.fw.paradise.constants.InterfaceInfoPropertyConstants;
@@ -35,8 +35,10 @@ public class ReceiveQueryExecutor {
 		LinkedHashMap<String, Object> param = request.getDataItem().getParam();
 		tableData.forEach((tableName, data) -> {
 			String expectedSqlId = SQLConstants.SQL_ID_DELETE + "." + tableName;
-			int excuteCount = dynamicQueryMapper.executeDelete(queryList, expectedSqlId, param);
-			log.info("delete table '{}' / count : {}", tableName, excuteCount);
+			int executeCount = dynamicQueryMapper.executeDelete(queryList, expectedSqlId, param);
+			if (sqlSessionTemplate.getExecutorType() == ExecutorType.BATCH)
+				executeCount = data.size();
+			log.info("delete table '{}' / count : {}", tableName, executeCount);
 		});
 	}
 
@@ -61,8 +63,8 @@ public class ReceiveQueryExecutor {
 		LinkedHashMap<String, List<Map<String, Object>>> tableData = request.getDataItem().getTable();
 		tableData.forEach((tableName, data) -> {
 			String expectedSqlId = SQLConstants.SQL_ID_INSERT + "." + tableName;
-			int excuteCount = batchInsert(queryList, expectedSqlId, data, sqlSessionTemplate, batchSize);
-			log.info("insert(batch) table '{}' / count : {}", tableName, excuteCount);
+			int executeCount = batchInsert(queryList, expectedSqlId, data, sqlSessionTemplate, batchSize);
+			log.info("insert(batch) table '{}' / count : {}", tableName, executeCount);
 		});
 	}
 
@@ -108,7 +110,7 @@ public class ReceiveQueryExecutor {
 				List<Map<String, Object>> subList = dataList.subList(fromIndex, toIndex);
 				// 단건 반복, ExecutorType.BATCH 적용
 				for (Map<String, Object> item : subList) {
-					totalInserted += batchMapper.executeInsert(queryList, queryId, item);
+					batchMapper.executeInsert(queryList, queryId, item);
 				}
 				fromIndex = toIndex;
 			}
@@ -117,7 +119,7 @@ public class ReceiveQueryExecutor {
 		} catch (Exception e) {
 			throw e;
 		}
-		return totalInserted;
+		return dataList.size();
 	}
 
 }

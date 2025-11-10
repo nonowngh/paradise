@@ -6,7 +6,7 @@ import java.util.Map;
 
 import lombok.extern.slf4j.Slf4j;
 import mb.fw.paradise.api.model.SqlQuery;
-import mb.fw.paradise.module.service.executor.exception.SqlNotFoundException;
+import mb.fw.paradise.module.service.exception.SqlNotFoundException;
 
 @Slf4j
 public class DynamicSqlProvider {
