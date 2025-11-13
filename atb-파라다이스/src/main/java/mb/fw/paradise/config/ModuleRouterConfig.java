@@ -18,11 +18,11 @@ import mb.fw.paradise.constants.AdaptorType;
 import mb.fw.paradise.constants.ApiMessageType;
 import mb.fw.paradise.constants.ESBApiHeaderConstants;
 import mb.fw.paradise.constants.TargetContextPathConstants;
-import mb.fw.paradise.module.handler.DBReceiveProcessHandler;
-import mb.fw.paradise.module.handler.DBResultProcessHandler;
-import mb.fw.paradise.module.handler.ESBAPIServletHandler;
-import mb.fw.paradise.module.handler.RFCReceiveHandler;
-import mb.fw.paradise.module.handler.RFCResultProcessHandler;
+import mb.fw.paradise.module.handler.receive.DBReceiveProcessHandler;
+import mb.fw.paradise.module.handler.receive.RFCReceiveHandler;
+import mb.fw.paradise.module.handler.send.DBResultHandler;
+import mb.fw.paradise.module.handler.send.ESBAPIServletHandler;
+import mb.fw.paradise.module.handler.send.RFCResultHandler;
 import mb.fw.paradise.service.ExceptionService;
 import mb.fw.paradise.util.HttpHeaderUtil;
 
@@ -54,8 +54,8 @@ public class ModuleRouterConfig {
 	}
 
 	@Bean
-	RouterFunction<ServerResponse> sendRoutes(DBResultProcessHandler dbResultProcessHandler,
-			RFCResultProcessHandler rfcResultProcessHandler, ESBAPIServletHandler esbAPIServletHandler) {
+	RouterFunction<ServerResponse> sendRoutes(DBResultHandler dbResultProcessHandler,
+			RFCResultHandler rfcResultProcessHandler, ESBAPIServletHandler esbAPIServletHandler) {
 		String rootPath = TargetContextPathConstants.DEFAULT_PATH + "/" + AdaptorConstants.MY_SYSTEM_CODE.toLowerCase();
 		return RouterFunctions.route()
 				.nest(RequestPredicates.path(rootPath), builder -> builder

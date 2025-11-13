@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import lombok.extern.slf4j.Slf4j;
 import mb.fw.paradise.api.model.InterfaceInfo;
 import mb.fw.paradise.api.model.PatternProperty;
 import mb.fw.paradise.api.model.SqlQuery;
@@ -31,6 +32,7 @@ import mb.fw.paradise.util.InterfaceInfoPropertyUtil;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+@Slf4j
 @Service
 @ConditionalOnAdaptorType(AdaptorType.DB)
 public class DBModuleService {
@@ -42,6 +44,7 @@ public class DBModuleService {
 	private TransactionalService transactionalService;
 
 	public Mono<APIResponseMessage> dbProcessAndResponse(InterfaceInfo interfaceInfo, APIRequestMessage request) {
+		log.info("^^^^dbProcessAdnResponse~");
 		return Mono.fromCallable(() -> transactionalService.transactionalProcess(interfaceInfo, request))
 				.subscribeOn(Schedulers.boundedElastic()) // 블로킹 작업 안전 처리
 				.onErrorResume(e -> {

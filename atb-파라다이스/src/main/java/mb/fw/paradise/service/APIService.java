@@ -136,7 +136,8 @@ public class APIService {
 
 	public Mono<String> callGatewayLargeData(APIRequestMessage request, String targetPath, String sendSystemCode,
 			String receiveSystemCode, String callBackPath, int chunkSize) {
-		Flux<APIRequestMessage> dataFlux = DataItemUtil.chunkLargeData(request, chunkSize);
+//		Flux<APIRequestMessage> dataFlux = DataItemUtil.chunkLargeData(request, chunkSize);
+		Flux<APIRequestMessage> dataFlux = DataItemUtil.chunkAndWrapSingleMessage(request, chunkSize);
 		Mono<byte[]> gzippedData = DataItemUtil.gzipNDJSON(dataFlux);
 
 		return gatewayWebClient.post().uri("/" + targetPath.toLowerCase()).headers(headers -> {

@@ -63,6 +63,33 @@ public class DataItemUtil {
 		}
 		return Flux.fromIterable(messageChunks);
 	}
+	
+	public static Flux<APIRequestMessage> chunkAndWrapSingleMessage(APIRequestMessage request, int chunkSize) {
+	    Map<String, List<Map<String, Object>>> tables = request.getDataItem().getTable();
+	    LinkedHashMap<String, List<Map<String, Object>>> chunkedTables = new LinkedHashMap<>();
+
+	    for (Map.Entry<String, List<Map<String, Object>>> entry : tables.entrySet()) {
+	        String tableName = entry.getKey();
+	        List<Map<String, Object>> rows = entry.getValue();
+	        if (rows == null || rows.isEmpty()) continue;
+
+	        List<Map<String, Object>> chunkedRows = new ArrayList<>();
+	        for (int i = 0; i < rows.size(); i += chunkSize) {
+	            List<Map<String, Object>> subList = rows.subList(i, Math.min(i + chunkSize, rows.size()));
+	            chunkedRows.addAll(subList); // 메모리 절감은 subList가 참조 기반이라 가능
+	        }
+	        chunkedTables.put(tableName, chunkedRows);
+	    }
+	    DataItem combinedData = new DataItem();
+	    combinedData.setTable(chunkedTables);
+	    APIRequestMessage combinedMessage = new APIRequestMessage();
+	    combinedMessage.setInterfaceId(request.getInterfaceId());
+	    combinedMessage.setTransactionId(request.getTransactionId());
+	    combinedMessage.setDataItem(combinedData);
+	    combinedMessage.setDataCount(chunkedTables.values().stream().mapToInt(List::size).sum());
+
+	    return Flux.just(combinedMessage);
+	}
 
 	public static Mono<byte[]> gzipNDJSON(Flux<APIRequestMessage> messages) {
 		return messages.map(msg -> {
