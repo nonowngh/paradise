@@ -1,9 +1,12 @@
 package mb.fw.paradise.module.service.executor;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.ibatis.session.ExecutorType;
 import org.mybatis.spring.SqlSessionTemplate;
@@ -15,6 +18,7 @@ import mb.fw.paradise.api.model.PatternProperty;
 import mb.fw.paradise.api.model.SqlQuery;
 import mb.fw.paradise.config.annotaion.ConditionalOnAdaptorType;
 import mb.fw.paradise.constants.AdaptorType;
+import mb.fw.paradise.constants.ESBCommonFieldConstants;
 import mb.fw.paradise.constants.InterfaceInfoPropertyConstants;
 import mb.fw.paradise.constants.SQLConstants;
 import mb.fw.paradise.dto.APIRequestMessage;
@@ -47,10 +51,16 @@ public class ReceiveQueryExecutor {
 		DynamicSqlMapper dynamicQueryMapper = sqlSessionTemplate.getMapper(DynamicSqlMapper.class);
 		List<SqlQuery> queryList = new ArrayList<>(interfaceInfo.getSqlQueryList());
 		LinkedHashMap<String, List<Map<String, Object>>> tableData = request.getDataItem().getTable();
+		Map<String, Object> params = Stream
+				.of(new AbstractMap.SimpleEntry<>(ESBCommonFieldConstants.ESB_IF_ID, interfaceInfo.getInterfaceId()),
+						new AbstractMap.SimpleEntry<>(ESBCommonFieldConstants.ESB_TX_ID, request.getTransactionId()))
+				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (oldValue, newValue) -> oldValue,
+						LinkedHashMap::new));
 		tableData.forEach((tableName, data) -> {
 			String expectedSqlId = SQLConstants.SQL_ID_INSERT + "." + tableName;
 			int excuteCount = 0;
 			for (Map<String, Object> item : data) {
+				item.putAll(params);
 				excuteCount += dynamicQueryMapper.executeInsert(queryList, expectedSqlId, item);
 			}
 			log.info("insert table '{}' / count : {}", tableName, excuteCount);
@@ -61,9 +71,14 @@ public class ReceiveQueryExecutor {
 			SqlSessionTemplate sqlSessionTemplate, int batchSize) {
 		List<SqlQuery> queryList = new ArrayList<>(interfaceInfo.getSqlQueryList());
 		LinkedHashMap<String, List<Map<String, Object>>> tableData = request.getDataItem().getTable();
+		Map<String, Object> params = Stream
+				.of(new AbstractMap.SimpleEntry<>(ESBCommonFieldConstants.ESB_IF_ID, interfaceInfo.getInterfaceId()),
+						new AbstractMap.SimpleEntry<>(ESBCommonFieldConstants.ESB_TX_ID, request.getTransactionId()))
+				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (oldValue, newValue) -> oldValue,
+						LinkedHashMap::new));
 		tableData.forEach((tableName, data) -> {
 			String expectedSqlId = SQLConstants.SQL_ID_INSERT + "." + tableName;
-			int executeCount = batchInsert(queryList, expectedSqlId, data, sqlSessionTemplate, batchSize);
+			int executeCount = batchInsert(queryList, expectedSqlId, data, sqlSessionTemplate, batchSize, params);
 			log.info("insert(batch) table '{}' / count : {}", tableName, executeCount);
 		});
 	}
@@ -94,7 +109,7 @@ public class ReceiveQueryExecutor {
 	}
 
 	public int batchInsert(List<SqlQuery> queryList, String queryId, List<Map<String, Object>> dataList,
-			SqlSessionTemplate batchSqlSessionTemplate, int batchSize) {
+			SqlSessionTemplate batchSqlSessionTemplate, int batchSize, Map<String, Object> params) {
 		int totalInserted = 0;
 		if (dataList == null || dataList.isEmpty()) {
 			return totalInserted;
@@ -110,6 +125,7 @@ public class ReceiveQueryExecutor {
 				List<Map<String, Object>> subList = dataList.subList(fromIndex, toIndex);
 				// 단건 반복, ExecutorType.BATCH 적용
 				for (Map<String, Object> item : subList) {
+					item.putAll(params);
 					batchMapper.executeInsert(queryList, queryId, item);
 				}
 				fromIndex = toIndex;

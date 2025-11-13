@@ -65,7 +65,13 @@ public class JcoExecutor {
 										String fieldWithoutUnderBar = fieldName.replaceAll("_", "");
 										String dataColumnWithoutUnderBar = key.replaceAll("_", "");
 										if (fieldWithoutUnderBar.equalsIgnoreCase(dataColumnWithoutUnderBar)) {
-											jcoTable.setValue(fieldName, row.get(key));
+											Object value = row.get(key);
+											String fieldType = metaData.getTypeAsString(fieldCnt);
+											if ("NUM".equals(fieldType) || "DATE".equals(fieldType)) {
+												if (value.toString().trim().isEmpty())
+													value = null;
+											}
+											jcoTable.setValue(fieldName, value);
 											printRow.append("[").append(fieldName).append(":").append(key).append("]");
 											break;
 										}
