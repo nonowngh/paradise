@@ -19,4 +19,7 @@ public class ApiContextPathConstants {
 	
 	// 인터페이스 스케줄 정보
 	public static final String INTERFACE_INFO_API_SCHEDULE_LIST = "/schedule-list";
+
+	// RFC FUNCTION 명에 해당하는 인터페이스 정보
+	public static final String INTERFACE_INFO_API_LIST_RFC_FUNCTION = "/interface-info-list-rfc-function";
 }

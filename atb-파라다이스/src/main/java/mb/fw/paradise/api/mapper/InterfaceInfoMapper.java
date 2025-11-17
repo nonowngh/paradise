@@ -10,7 +10,10 @@ import mb.fw.paradise.api.model.InterfaceInfo;
 @Mapper
 public interface InterfaceInfoMapper {
 
-    InterfaceInfo selectInterfaceWithDetails(@Param("interfaceId") String interfaceId);
-	
+	InterfaceInfo selectInterfaceWithDetails(@Param("interfaceId") String interfaceId);
+
 	List<InterfaceInfo> selectInterfaceCronExpressionList(List<String> interfaceIdList);
+
+	List<InterfaceInfo> selectInterfaceListWithFunctionName(@Param("interfaceIdList") List<String> interfaceIdList,
+			@Param("functionName") String functionName);
 }

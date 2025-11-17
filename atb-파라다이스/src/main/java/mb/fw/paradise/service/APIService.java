@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 import mb.fw.paradise.api.model.InterfaceInfo;
+import mb.fw.paradise.constants.ApiContextPathConstants;
 import mb.fw.paradise.constants.ApiMessageType;
 import mb.fw.paradise.constants.ESBApiHeaderConstants;
 import mb.fw.paradise.constants.ESBStatusConstants;
@@ -50,9 +51,10 @@ public class APIService {
 
 	public Mono<List<InterfaceInfo>> getInterfaceInfoByFunctionName(String rfcFunctionName,
 			List<String> interfaceIdList) {
-		return interfaceInfoWebClient.get()
-				.uri(uriBuilder -> uriBuilder.queryParam("interfaceId", interfaceIdList)
+		return interfaceInfoWebClient.post()
+				.uri(uriBuilder -> uriBuilder.path(ApiContextPathConstants.INTERFACE_INFO_API_LIST_RFC_FUNCTION)
 						.queryParam("rfcFunctionName", rfcFunctionName).build())
+				.bodyValue(interfaceIdList) // Body 전송
 				.retrieve().bodyToFlux(InterfaceInfo.class).collectList().flatMap(list -> {
 					if (list.isEmpty()) {
 						return Mono.error(new NoSuchElementException("InterfaceInfo not found for interfaceIds: "

@@ -25,15 +25,21 @@ public class InterfaceInfoService {
 
 	@Cacheable(value = "interfaceInfoCache", key = "#id")
 	public InterfaceInfo getInterfaceInfoByInterfaceId(String id) {
-	    return interfaceInfoMapper.selectInterfaceWithDetails(id);
+		return interfaceInfoMapper.selectInterfaceWithDetails(id);
+	}
+
+	@Cacheable(value = "interfaceInfoCache", key = "#functionName")
+	public List<InterfaceInfo> getInterfaceInfoListByInterfaceIdAndFunctionName(List<String> interfaceIdList,
+			String functionName) {
+		return interfaceInfoMapper.selectInterfaceListWithFunctionName(interfaceIdList, functionName);
 	}
 
 	@CacheEvict(value = "interfaceInfoCache", allEntries = true)
 	public void clearAllInfoCache() {
-        log.info("interfaceInfoCache 캐시 삭제 완료.");
+		log.info("interfaceInfoCache 캐시 삭제 완료.");
 	}
-	
+
 	public Mono<List<InterfaceInfo>> getScheduleList(List<String> interfaceIdList) {
-        return Mono.just(interfaceInfoMapper.selectInterfaceCronExpressionList(interfaceIdList));
-    }
+		return Mono.just(interfaceInfoMapper.selectInterfaceCronExpressionList(interfaceIdList));
+	}
 }

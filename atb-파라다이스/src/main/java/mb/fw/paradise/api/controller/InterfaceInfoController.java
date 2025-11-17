@@ -34,17 +34,13 @@ public class InterfaceInfoController {
 
 	@GetMapping("")
 	public Mono<ResponseEntity<?>> getInterfaceInfo(@RequestParam String interfaceId) {
-	    return Mono.fromSupplier(() -> {
-	        InterfaceInfo info = interfaceInfoService.getInterfaceInfoByInterfaceId(interfaceId);
-	        return (info != null)
-	            ? ResponseEntity.ok(info)
-	            : ResponseEntity.notFound().build();
-	   }).onErrorResume(e -> {
-	        log.error("Error occurred while fetching interface info", e);
-	        return Mono.just(ResponseEntity
-	            .status(HttpStatus.INTERNAL_SERVER_ERROR)
-	            .body(e.getMessage()));
-	    });
+		return Mono.fromSupplier(() -> {
+			InterfaceInfo info = interfaceInfoService.getInterfaceInfoByInterfaceId(interfaceId);
+			return (info != null) ? ResponseEntity.ok(info) : ResponseEntity.notFound().build();
+		}).onErrorResume(e -> {
+			log.error("Error occurred while fetching interface info", e);
+			return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage()));
+		});
 	}
 
 	@GetMapping(ApiContextPathConstants.INTERFACE_INFO_API_CLEAR_CACHE)
@@ -56,5 +52,19 @@ public class InterfaceInfoController {
 	@PostMapping(ApiContextPathConstants.INTERFACE_INFO_API_SCHEDULE_LIST)
 	public Mono<List<InterfaceInfo>> getInterfaceScheduleList(@RequestBody List<String> interfaceIdList) {
 		return interfaceInfoService.getScheduleList(interfaceIdList);
+	}
+
+	@PostMapping(ApiContextPathConstants.INTERFACE_INFO_API_LIST_RFC_FUNCTION)
+	public Mono<ResponseEntity<? extends Object>> getInterfaceInfoListForRfcFunction(
+			@RequestBody List<String> interfaceIdList, @RequestParam(required = false) String rfcFunctionName) {
+		return Mono.fromSupplier(() -> {
+			List<InterfaceInfo> infoList = interfaceInfoService
+					.getInterfaceInfoListByInterfaceIdAndFunctionName(interfaceIdList, rfcFunctionName);
+			return (infoList != null && infoList.size() > 0) ? ResponseEntity.ok(infoList)
+					: ResponseEntity.notFound().build();
+		}).onErrorResume(e -> {
+			log.error("Error occurred while fetching interface info", e);
+			return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage()));
+		});
 	}
 }

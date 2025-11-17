@@ -54,5 +54,36 @@
         #{id}
       </foreach>
     </select>
+    
+    <select id="selectInterfaceListWithFunctionName" 
+        parameterType="map"
+        resultMap="InterfaceInfoMap">
+   SELECT 
+    i.interface_id,
+    i.cron_expression,
+    i.pattern_type,
+    i.send_system_code,
+    i.recv_system_code,
+    d.property_name,
+    d.property_value,
+    q.sql_id,
+    q.query
+FROM interface.tb_interface_info i
+LEFT JOIN interface.tb_interface_detail d
+    ON i.interface_id = d.interface_id
+LEFT JOIN interface.tb_interface_query q
+    ON i.interface_id = q.interface_id
+WHERE i.use_yn = 'Y'
+  AND i.interface_id IN (
+      SELECT d1.interface_id
+      FROM interface.tb_interface_detail d1
+      WHERE d1.property_name = 'RFC_FUNCTION_NAME'
+        AND d1.property_value = #{functionName}
+  )
+  AND i.interface_id IN
+      <foreach collection="interfaceIdList" item="id" open="(" separator="," close=")">
+          #{id}
+      </foreach>
+</select>
 
 </mapper>

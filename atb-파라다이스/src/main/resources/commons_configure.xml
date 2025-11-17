@@ -6,7 +6,7 @@
         <description><![CDATA[$dbcp.description]]></description>
         <property name="url" value="jdbc:postgresql://localhost:5432/indigodb"/>
         <property name="driverClassName" value="org.postgresql.Driver"/>
-        <property name="username" value="indigo_interface"/>
+        <property name="username" value="indigo"/>
         <property name="password" value="meta1234"/>
         <property name="defaultAutoCommit" value="false"/>
         <property name="maxWait" value="0"/>
