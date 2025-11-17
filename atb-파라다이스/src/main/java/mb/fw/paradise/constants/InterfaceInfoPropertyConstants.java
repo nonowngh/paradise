@@ -27,6 +27,12 @@ public class InterfaceInfoPropertyConstants {
 
 	public static final String RFC_IMPORT_TABLE_NAMES = "RFC_IMPORT_TABLE_NAMES";
 
+	public static final String RFC_TARGET_LEG_CODE = "RFC_TARGET_LEG_CODE";
+
+	public static final String RFC_RETURN_STRUCTURE_NAME = "RFC_RETURN_STRUCTURE_NAME";
+	
+	public static final String RFC_RETURN_TABLE_NAME = "RFC_RETURN_TABLE_NAME";
+
 	public static final String API_PROCESS_TYPE = "API_PROCESS_TYPE";
 
 	public static final String API_TABLE_NAMES = "API_TABLE_NAMES";

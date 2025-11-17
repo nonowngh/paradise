@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import com.sap.conn.jco.JCoDestination;
@@ -34,7 +35,7 @@ public class RFCModuleService {
 
 	private final JCoDestination jcoDestination;
 
-	public RFCModuleService(JCoDestination jcoDestination) {
+	public RFCModuleService(@Qualifier("jcoDestinationClient") JCoDestination jcoDestination) {
 		this.jcoDestination = jcoDestination;
 	}
 

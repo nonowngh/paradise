@@ -13,7 +13,7 @@ import mb.fw.paradise.dto.APIRequestMessage;
 import mb.fw.paradise.dto.APIResponseMessage;
 import mb.fw.paradise.gateway.exception.CustomGatewayException;
 import mb.fw.paradise.service.APIService;
-import mb.fw.paradise.util.TransactionGenerator;
+import mb.fw.paradise.util.TransactionGeneratorUtil;
 import reactor.core.publisher.Mono;
 
 @Slf4j
@@ -42,7 +42,7 @@ public class ESBAPIServletHandler {
 									+ PatternType.fromPatternType(patternType).getTargetContextPath();
 							String interfaceId = interfaceInfo.getInterfaceId();
 							String transactionId = TransactionIdGenerator.generate(interfaceId,
-									TransactionGenerator.getNextSequence(), TransactionGenerator.getDateTimeNow());
+									TransactionGeneratorUtil.getNextSequence(), TransactionGeneratorUtil.getDateTimeNow());
 							request.setTransactionId(transactionId);
 							request.setDataCount(1);
 							return apiService.callGatewaySync(request, targetPath, interfaceInfo.getSndSystemCode(),

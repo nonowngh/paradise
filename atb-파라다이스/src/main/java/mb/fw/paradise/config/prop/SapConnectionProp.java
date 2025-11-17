@@ -20,6 +20,12 @@ public class SapConnectionProp {
 	private String group;
 	private String trace;
 	private String sysnr;
-//	private int poolCapacity;
-//	private int peakLimit;
+	private int poolCapacity = 3;
+	private int peakLimit = 10;
+	//server setting..
+	private String gwhost;
+	private String gwserv;
+	private int maxStartupDelay;
+	private String progid;
+	private String connectionCount;
 }

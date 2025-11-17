@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class TransactionGenerator {
+public class TransactionGeneratorUtil {
     private static final AtomicInteger seq = new AtomicInteger(0);
 
     public static String getNextSequence() {

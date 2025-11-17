@@ -18,7 +18,7 @@ import mb.fw.paradise.module.BatchModule;
 import mb.fw.paradise.module.service.DBModuleService;
 import mb.fw.paradise.service.APIService;
 import mb.fw.paradise.util.DataItemUtil;
-import mb.fw.paradise.util.TransactionGenerator;
+import mb.fw.paradise.util.TransactionGeneratorUtil;
 import reactor.core.publisher.Mono;
 
 @Slf4j
@@ -38,8 +38,8 @@ public class DBBatchSend implements BatchModule {
 
 	@Override
 	public void executeTask(String interfaceId) {
-		String transactionId = TransactionIdGenerator.generate(interfaceId, TransactionGenerator.getNextSequence(),
-				TransactionGenerator.getDateTimeNow());
+		String transactionId = TransactionIdGenerator.generate(interfaceId, TransactionGeneratorUtil.getNextSequence(),
+				TransactionGeneratorUtil.getDateTimeNow());
 		log.info("Batch scheduler start '{}' -> [{}]", interfaceId, transactionId);
 		AtomicReference<InterfaceInfo> interfaceRef = new AtomicReference<>();
 		apiService.getInterfaceInfo(interfaceId).flatMap(interfaceInfo -> {

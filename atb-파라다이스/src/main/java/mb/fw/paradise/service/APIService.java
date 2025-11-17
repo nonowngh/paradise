@@ -1,6 +1,7 @@
 package mb.fw.paradise.service;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -45,6 +46,20 @@ public class APIService {
 				.retrieve().bodyToMono(InterfaceInfo.class).retryWhen(Retry.backoff(3, Duration.ofSeconds(1)))
 				.switchIfEmpty(
 						Mono.error(new NoSuchElementException("InterfaceInfo not found for id : " + interfaceId)));
+	}
+
+	public Mono<List<InterfaceInfo>> getInterfaceInfoByFunctionName(String rfcFunctionName,
+			List<String> interfaceIdList) {
+		return interfaceInfoWebClient.get()
+				.uri(uriBuilder -> uriBuilder.queryParam("interfaceId", interfaceIdList)
+						.queryParam("rfcFunctionName", rfcFunctionName).build())
+				.retrieve().bodyToFlux(InterfaceInfo.class).collectList().flatMap(list -> {
+					if (list.isEmpty()) {
+						return Mono.error(new NoSuchElementException("InterfaceInfo not found for interfaceIds: "
+								+ interfaceIdList + ", rfcFunctionName: " + rfcFunctionName));
+					}
+					return Mono.just(list);
+				}).retryWhen(Retry.backoff(3, Duration.ofSeconds(1)));
 	}
 
 	public Mono<String> callGateway(APIRequestMessage request, String targetPath, String sendSystemCode,
