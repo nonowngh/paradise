@@ -25,6 +25,8 @@ public class ModuleConfig {
 	private List<String> interfaceList;
 	// 해당 어댑터 시스템 코드
 	private String systemCode;
+	// 대량 처리건수
+	private int largeDataChunkSize = 1000;
 
 	@Autowired
 	private Environment env;
@@ -42,6 +44,7 @@ public class ModuleConfig {
 			log.info("Setting property my system-code : {}", systemCode);
 			AdaptorConstants.MY_SYSTEM_CODE = systemCode;
 		}
+		log.info("Setting property large-data-chunk-size : {}", largeDataChunkSize);
 	}
 
 }

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import lombok.extern.slf4j.Slf4j;
 import mb.fw.atb.util.TransactionIdGenerator;
 import mb.fw.paradise.api.model.InterfaceInfo;
+import mb.fw.paradise.config.ModuleConfig;
 import mb.fw.paradise.config.annotaion.ConditionalOnAdaptorType;
 import mb.fw.paradise.constants.AdaptorType;
 import mb.fw.paradise.constants.ESBStatusConstants;
@@ -28,12 +29,12 @@ public class DBBatchSend implements BatchModule {
 
 	private final APIService apiService;
 	private final DBModuleService dbModuleService;
-	
-	public static int chunkSize = 1000;
+	private final ModuleConfig moduleConfig;
 
-	public DBBatchSend(APIService apiService, DBModuleService dbModuleService) {
+	public DBBatchSend(APIService apiService, DBModuleService dbModuleService, ModuleConfig moduleConfig) {
 		this.apiService = apiService;
 		this.dbModuleService = dbModuleService;
+		this.moduleConfig = moduleConfig;
 	}
 
 	@Override
@@ -58,7 +59,7 @@ public class DBBatchSend implements BatchModule {
 					int dataCount = DataItemUtil.tableDataCount(dataItem);
 					if (dataCount == 0)
 						return Mono.empty();
-					if (dataCount < chunkSize)
+					if (dataCount < moduleConfig.getLargeDataChunkSize())
 						return apiService.callGateway(
 								APIRequestMessage.builder().interfaceId(interfaceId).transactionId(transactionId)
 										.dataItem(dataItem).dataCount(dataCount).build(),
@@ -69,7 +70,7 @@ public class DBBatchSend implements BatchModule {
 								APIRequestMessage.builder().interfaceId(interfaceId).transactionId(transactionId)
 										.dataItem(dataItem).dataCount(dataCount).build(),
 								targetPath, interfaceInfo.getSndSystemCode(), interfaceInfo.getRcvSystemCode(),
-								callBackPath, chunkSize);
+								callBackPath, moduleConfig.getLargeDataChunkSize());
 				}).switchIfEmpty(Mono.fromRunnable(() -> log.info("조회 데이터 없음")));
 			});
 		}).doOnError(error -> log.error("오류 발생: {}", error.getMessage(), error)).onErrorResume(error -> {
