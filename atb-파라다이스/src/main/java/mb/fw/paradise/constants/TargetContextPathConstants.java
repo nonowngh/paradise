@@ -21,6 +21,8 @@ public class TargetContextPathConstants {
 
     public static final String RCV_API_CALL = "/rcv-api-call";
     
+    public static final String RCV_API_CALL_SYNC = "/rcv-api-call-sync";
+    
     public static final String SND_COMMON_API = "/snd-common-api";
     
     public static final String LARGE_DATA_PATH = "/large-data";
