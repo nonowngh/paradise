@@ -93,7 +93,7 @@ public class RfcFunctionHandler implements JCoServerFunctionHandler {
 	private List<InterfaceInfo> loadInterfaceInfoList(String functionName) {
 		List<InterfaceInfo> list = apiService.getInterfaceInfoByFunctionName(functionName, interfaceIdList).block();
 		if (list == null || list.isEmpty()) {
-			throw new NoSuchElementException("No interface config for RFC " + functionName);
+			throw new NoSuchElementException("No interface config for RFC '" + functionName + "'");
 		}
 		return list;
 	}
