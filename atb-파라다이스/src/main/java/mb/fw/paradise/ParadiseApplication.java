@@ -5,6 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import com.mb.indigo2.springsupport.AdaptorConfig;
 
@@ -14,6 +15,7 @@ import mb.fw.atb.util.MDCLogging;
 
 @ImportResource({ "classpath:bean.xml" })
 @EnableAsync
+@EnableScheduling
 @SpringBootApplication
 @Slf4j
 @ComponentScan(basePackages = { "mb.fw.paradise", "mb.fw.adaptor" })

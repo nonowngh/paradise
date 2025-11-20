@@ -3,7 +3,9 @@ package mb.fw.paradise.module.server;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -11,7 +13,6 @@ import com.sap.conn.jco.JCoDestination;
 import com.sap.conn.jco.JCoException;
 import com.sap.conn.jco.JCoRepository;
 import com.sap.conn.jco.rt.DefaultDestinationManager;
-import com.sap.conn.jco.server.DefaultServerHandlerFactory;
 import com.sap.conn.jco.server.IndigoJCoServerFactory;
 import com.sap.conn.jco.server.JCoServer;
 import com.sap.conn.jco.server.JCoServerContextInfo;
@@ -24,21 +25,25 @@ import mb.fw.paradise.config.ModuleConfig;
 import mb.fw.paradise.config.annotaion.ConditionalOnAdaptorType;
 import mb.fw.paradise.constants.AdaptorType;
 import mb.fw.paradise.module.server.handler.RfcFunctionHandler;
+import mb.fw.paradise.module.server.handler.factory.WildcardHandlerFactory;
 import mb.fw.paradise.service.APIService;
 
 @Slf4j
 @Component
 @ConditionalOnAdaptorType(AdaptorType.RFC_SERVER)
 public class RfcServer {
-	public static JCoServer jcoServer;
+	private JCoServer jcoServer;
 
-	private final JCoDestination jcoDestination;
+	private final JCoDestination destination;
 	private final ModuleConfig moduleConfig;
 	private final APIService apiService;
 
-	public RfcServer(@Qualifier("jcoDestinationServer") JCoDestination jcoDestination, ModuleConfig moduleConfig,
+	@Autowired
+	Environment env;
+
+	public RfcServer(@Qualifier("jcoDestinationServer") JCoDestination destination, ModuleConfig moduleConfig,
 			APIService apiService) {
-		this.jcoDestination = jcoDestination;
+		this.destination = destination;
 		this.moduleConfig = moduleConfig;
 		this.apiService = apiService;
 	}
@@ -62,17 +67,20 @@ public class RfcServer {
 			}
 			connectJCoServer();
 
-			JCoRepository repository = jcoDestination.getRepository();
+//			JCoDestination destination = JCoDestinationManager.getDestinationForIndigo(env.getProperty("sap.connection.destination-name"), props);
+
+			JCoRepository repository = destination.getRepository();
 			jcoServer.setRepository(repository);
 
 			// Handler Factory 생성
-			DefaultServerHandlerFactory.FunctionHandlerFactory handlerFactory = new DefaultServerHandlerFactory.FunctionHandlerFactory();
+//			DefaultServerHandlerFactory.FunctionHandlerFactory handlerFactory = new DefaultServerHandlerFactory.FunctionHandlerFactory();
+//
+//			// RFC별 handler 등록 대신 1개로 등록해서 내부 처리
+//			handlerFactory.registerHandler("*",
+//					new RfcFunctionHandler(destination.getProperties(), moduleConfig.getInterfaceList(), apiService));
 
-			// RFC별 handler 등록 대신 1개로 등록해서 내부 처리
-			handlerFactory.registerHandler("*", new RfcFunctionHandler(jcoDestination.getProperties(),
-					moduleConfig.getInterfaceList(), apiService));
-
-			jcoServer.setCallHandlerFactory(handlerFactory);
+			jcoServer.setCallHandlerFactory(new WildcardHandlerFactory(
+					new RfcFunctionHandler(destination.getProperties(), moduleConfig.getInterfaceList(), apiService)));
 			jcoServer.addServerErrorListener(new ThrowableListener());
 			jcoServer.addServerExceptionListener(new ThrowableListener());
 
@@ -89,14 +97,14 @@ public class RfcServer {
 	}
 
 	private void connectJCoServer() throws JCoException {
-		DefaultDestinationManager.destinationProp = jcoDestination.getProperties();
-		jcoServer = IndigoJCoServerFactory.getServerWithProperties("SERVER", jcoDestination.getProperties());
+		DefaultDestinationManager.destinationProp = destination.getProperties();
+		jcoServer = IndigoJCoServerFactory.getServerWithProperties("SERVER", destination.getProperties());
 	}
 
 	/**
 	 * Spring Boot 스케쥴러 기반으로 10초마다 서버 상태 확인 및 재기동
 	 */
-	@Scheduled(fixedDelayString = "10000")
+	@Scheduled(fixedDelayString = "60000")
 	public void healthCheck() {
 		try {
 			if (checkJCoServerHealthy(jcoServer)) {

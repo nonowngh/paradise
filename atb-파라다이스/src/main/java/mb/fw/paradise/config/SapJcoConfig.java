@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 
 import com.sap.conn.jco.JCoDestination;
 import com.sap.conn.jco.JCoDestinationManager;
+import com.sap.conn.jco.JCoException;
 import com.sap.conn.jco.ext.DestinationDataProvider;
 import com.sap.conn.jco.ext.ServerDataProvider;
 
@@ -15,7 +16,7 @@ import mb.fw.paradise.config.prop.SapConnectionProp;
 import mb.fw.paradise.constants.AdaptorType;
 
 @Configuration
-@ConditionalOnAdaptorType(value = { AdaptorType.RFC, AdaptorType.RFC_SERVER })
+//@ConditionalOnAdaptorType(value = { AdaptorType.RFC, AdaptorType.RFC_SERVER })
 public class SapJcoConfig {
 
 	private final SapConnectionProp properties;
@@ -25,6 +26,7 @@ public class SapJcoConfig {
 	}
 
 	@Bean(name = "jcoDestinationClient")
+	@ConditionalOnAdaptorType(AdaptorType.RFC)
 	JCoDestination jcoDestination() throws Exception {
 		Properties connectProperties = new Properties();
 		connectProperties.setProperty(DestinationDataProvider.JCO_ASHOST, properties.getAshost());
@@ -43,18 +45,19 @@ public class SapJcoConfig {
 //				String.valueOf(properties.getPeakLimit()));
 		return JCoDestinationManager.getDestinationForIndigo(properties.getDestinationName(), connectProperties);
 	}
-
+	
 	@Bean(name = "jcoDestinationServer")
-	JCoDestination jcoDestinationServer() throws Exception {
+	@ConditionalOnAdaptorType(AdaptorType.RFC_SERVER)
+	JCoDestination jcoServerDestination() throws JCoException {
 		Properties connectProperties = new Properties();
 		connectProperties.setProperty(DestinationDataProvider.JCO_ASHOST, properties.getAshost());
-		connectProperties.setProperty(DestinationDataProvider.JCO_R3NAME, properties.getR3name());
-		connectProperties.setProperty(DestinationDataProvider.JCO_MSSERV, properties.getMsserv());
+//		connectProperties.setProperty(DestinationDataProvider.JCO_R3NAME, properties.getR3name());
+//		connectProperties.setProperty(DestinationDataProvider.JCO_MSSERV, properties.getMsserv());
 		connectProperties.setProperty(DestinationDataProvider.JCO_CLIENT, properties.getClient());
 		connectProperties.setProperty(DestinationDataProvider.JCO_USER, properties.getUser());
 		connectProperties.setProperty(DestinationDataProvider.JCO_PASSWD, properties.getPasswd());
 		connectProperties.setProperty(DestinationDataProvider.JCO_LANG, properties.getLang());
-		connectProperties.setProperty(DestinationDataProvider.JCO_GROUP, properties.getGroup());
+//		connectProperties.setProperty(DestinationDataProvider.JCO_GROUP, properties.getGroup());
 		connectProperties.setProperty(DestinationDataProvider.JCO_TRACE, properties.getTrace());
 		connectProperties.setProperty(DestinationDataProvider.JCO_SYSNR, properties.getSysnr());
 		connectProperties.setProperty(DestinationDataProvider.JCO_POOL_CAPACITY,
@@ -72,4 +75,5 @@ public class SapJcoConfig {
 
 		return JCoDestinationManager.getDestinationForIndigo(properties.getDestinationName(), connectProperties);
 	}
+
 }

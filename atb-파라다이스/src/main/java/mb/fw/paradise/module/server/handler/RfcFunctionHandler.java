@@ -69,10 +69,11 @@ public class RfcFunctionHandler implements JCoServerFunctionHandler {
 
 			// 4) SAP Client 검증
 			validateClientId(clientId);
-
+			
 			// 5) Import 데이터 추출
 			DataItem dataItem = extractImportData(function, interfaceInfo);
 			int dataCount = DataItemUtil.tableDataCount(dataItem);
+			log.debug("receive from rfc[{}] : {}", functionName, dataItem);
 			log.info("RFC send data count : {}", dataCount);
 
 			// 6) Gateway 호출
@@ -178,6 +179,7 @@ public class RfcFunctionHandler implements JCoServerFunctionHandler {
 				break;
 			}
 		}
+		log.debug("return to rfc : [{}], [{}], [{}]", txId, status, msg);
 	}
 
 	private void fillStructureExport(JCoFunction function, InterfaceInfo info, String txId, String message,
