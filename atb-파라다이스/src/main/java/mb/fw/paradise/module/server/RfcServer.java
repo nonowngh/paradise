@@ -67,8 +67,6 @@ public class RfcServer {
 			}
 			connectJCoServer();
 
-//			JCoDestination destination = JCoDestinationManager.getDestinationForIndigo(env.getProperty("sap.connection.destination-name"), props);
-
 			JCoRepository repository = destination.getRepository();
 			jcoServer.setRepository(repository);
 
