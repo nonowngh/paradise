@@ -27,6 +27,8 @@ public class ModuleConfig {
 	private String systemCode;
 	// 대량 처리건수
 	private int largeDataChunkSize = 1000;
+	// 배치 인터페이스 크론 리로딩 스케줄러 설정
+	private int schedulerRefreshIntervalSeconds = 0;
 
 	@Autowired
 	private Environment env;
