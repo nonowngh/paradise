@@ -2,8 +2,6 @@ package mb.fw.paradise.service;
 
 import java.util.List;
 
-import javax.annotation.PostConstruct;
-
 import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
@@ -47,7 +45,7 @@ public class QuartzSchedulerService {
 		this.config = config;
 	}
 
-	@EventListener(ApplicationReadyEvent.class)
+//	@EventListener(ApplicationReadyEvent.class)
 	public void scheduleJobsFromAPI() {
 		if (scheduler == null)
 			return;
@@ -65,7 +63,7 @@ public class QuartzSchedulerService {
 			String taskName = config.getBatchTask();
 			if (cronScheduleInfoList != null) {
 				for (InterfaceInfo info : cronScheduleInfoList) {
-					log.info("Register cron schedule info [{}] -> {}", info.getInterfaceId(), info.getCronExpression());
+					log.info("🚀 크론 스케줄 정보 등록 [{}] -> {}", info.getInterfaceId(), info.getCronExpression());
 					scheduleJob(taskName, info.getInterfaceId(), info.getCronExpression());
 				}
 			}
@@ -94,7 +92,7 @@ public class QuartzSchedulerService {
 		} catch (NoSuchBeanDefinitionException nsbd) {
 			throw new RuntimeException(nsbd.getMessage());
 		} catch (SchedulerException e) {
-			throw new RuntimeException("Failed to schedule job: " + interfaceId, e);
+			throw new RuntimeException("❌ 스케줄 등록 실패 : " + interfaceId, e);
 		}
 	}
 
@@ -103,10 +101,13 @@ public class QuartzSchedulerService {
 		scheduleJobsFromAPI(); // API 호출해서 최신 크론 정보 반영
 	}
 
-	@PostConstruct
-	public void startRefreshTask() {
-		if (scheduler == null || config.getSchedulerRefreshIntervalSeconds() <= 0)
-			return;
-		taskScheduler.scheduleAtFixedRate(this::refreshScheduler, config.getSchedulerRefreshIntervalSeconds() * 1000L);
+	@EventListener(ApplicationReadyEvent.class)
+	public void onApplicationReady() {
+		scheduleJobsFromAPI();
+
+		if (scheduler != null && config.getSchedulerRefreshIntervalSeconds() > 0) {
+			taskScheduler.scheduleAtFixedRate(this::refreshScheduler,
+					config.getSchedulerRefreshIntervalSeconds() * 1000L);
+		}
 	}
 }

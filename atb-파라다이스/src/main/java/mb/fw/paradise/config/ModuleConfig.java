@@ -37,15 +37,15 @@ public class ModuleConfig {
 	public void init() {
 		String adaptorType = env.getProperty("adaptor.type");
 		if (adaptorType != null)
-			log.info("adaptor-type : [{}]", adaptorType);
+			log.info("✅ adaptor-type : [{}]", adaptorType);
 		if (batchTask != null && !batchTask.isEmpty())
-			log.info("Setting property batch-task : {}", batchTask);
+			log.info("✅ Setting property batch-task : {}", batchTask);
 		if (interfaceList != null && !interfaceList.isEmpty()) {
-			log.info("Setting property interface-list : {}", interfaceList);
-			log.info("Setting property large-data-chunk-size : {}", largeDataChunkSize);
+			log.info("✅ Setting property interface-list : {}", interfaceList);
+			log.info("✅ Setting property large-data-chunk-size : {}", largeDataChunkSize);
 		}
 		if (systemCode != null && !systemCode.isEmpty()) {
-			log.info("Setting property my system-code : {}", systemCode);
+			log.info("✅ Setting property my system-code : {}", systemCode);
 			AdaptorConstants.MY_SYSTEM_CODE = systemCode;
 		}
 	}
