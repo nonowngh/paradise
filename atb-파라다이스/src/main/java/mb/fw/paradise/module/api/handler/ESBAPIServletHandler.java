@@ -1,0 +1,64 @@
+package mb.fw.paradise.module.api.handler;
+
+import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.server.ServerRequest;
+import org.springframework.web.reactive.function.server.ServerResponse;
+
+import lombok.extern.slf4j.Slf4j;
+import mb.fw.net.common.util.TransactionIdGenerator;
+import mb.fw.paradise.common.config.ModuleConfig;
+import mb.fw.paradise.common.constants.ESBStatusConstants;
+import mb.fw.paradise.common.constants.PatternType;
+import mb.fw.paradise.common.dto.APIRequestMessage;
+import mb.fw.paradise.common.dto.APIResponseMessage;
+import mb.fw.paradise.common.service.APIService;
+import mb.fw.paradise.common.util.TransactionGeneratorUtil;
+import mb.fw.paradise.module.gateway.exception.CustomGatewayException;
+import reactor.core.publisher.Mono;
+
+@Slf4j
+@Component
+public class ESBAPIServletHandler {
+
+	private final APIService apiService;
+	private final ModuleConfig moduleConfig;
+
+	public ESBAPIServletHandler(APIService apiService, ModuleConfig moduleConfig) {
+		this.apiService = apiService;
+		this.moduleConfig = moduleConfig;
+	}
+
+	public Mono<ServerResponse> callGateway(ServerRequest serverRequest) {
+		return serverRequest.bodyToMono(APIRequestMessage.class)
+				.switchIfEmpty(Mono.error(new IllegalArgumentException("요청 body가 존재하지 않습니다."))) // body 없을 때 에러 처리
+				.flatMap(request -> {
+					return Mono.just(request).flatMap(nextRequest -> {
+						if (!moduleConfig.getInterfaceList().contains(nextRequest.getInterfaceId()))
+							return Mono.error(new IllegalArgumentException(
+									"모듈에 등록되지 않은 인터페이스 아이디 -> " + nextRequest.getInterfaceId()));
+						return apiService.getInterfaceInfo(request.getInterfaceId()).flatMap(interfaceInfo -> {
+							String patternType = interfaceInfo.getPatternType();
+							String targetPath = interfaceInfo.getRcvSystemCode()
+									+ PatternType.fromPatternType(patternType).getTargetContextPath();
+							String interfaceId = interfaceInfo.getInterfaceId();
+							String transactionId = TransactionIdGenerator.generate(interfaceId,
+									TransactionGeneratorUtil.getNextSequence(), TransactionGeneratorUtil.getDateTimeNow());
+							request.setTransactionId(transactionId);
+							request.setDataCount(1);
+							return apiService.callGatewaySync(request, targetPath, interfaceInfo.getSndSystemCode(),
+									interfaceInfo.getRcvSystemCode());
+						});
+					}).flatMap(response -> ServerResponse.ok().bodyValue(response)).onErrorResume(error -> {
+						log.error("Error [API call-gateway process] -> {}", error.getMessage(), error);
+						if (error instanceof CustomGatewayException)
+							return ServerResponse.status(500).bodyValue(((CustomGatewayException)error).getApiResponse());
+						else
+							return ServerResponse.status(500)
+									.bodyValue(APIResponseMessage.builder().interfaceId(request.getInterfaceId())
+											.transactionId(request.getTransactionId()).dataCount(request.getDataCount())
+											.statusCode(ESBStatusConstants.FAIL).statusMessage(error.getMessage())
+											.build());
+					});
+				});
+	}
+}

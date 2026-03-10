@@ -18,7 +18,7 @@ import mb.fw.atb.util.MDCLogging;
 @EnableScheduling
 @SpringBootApplication
 @Slf4j
-@ComponentScan(basePackages = { "mb.fw.paradise", "mb.fw.adaptor" })
+@ComponentScan(basePackages = { "mb.fw.paradise.common", "mb.fw.adaptor" })
 public class ParadiseApplication {
 	public static void main(String[] args) throws Exception {
 		System.setProperty("javax.xml.parsers.DocumentBuilderFactory",

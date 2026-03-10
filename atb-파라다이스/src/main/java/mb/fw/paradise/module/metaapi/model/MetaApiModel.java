@@ -1,0 +1,26 @@
+package mb.fw.paradise.module.metaapi.model;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
+
+import lombok.Data;
+
+@Data
+public class MetaApiModel {
+
+	// 공통 항목
+	private String interfaceId;
+
+	private String cronExpression;
+
+	private String patternType;
+
+	private String sndSystemCode;
+
+	private String rcvSystemCode;
+
+	private Set<PatternProperty> propertyList = new LinkedHashSet<>();
+	
+	private Set<SqlQuery> sqlQueryList = new LinkedHashSet<>();
+
+}
