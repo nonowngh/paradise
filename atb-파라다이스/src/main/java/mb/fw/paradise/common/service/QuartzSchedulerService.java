@@ -30,7 +30,7 @@ import mb.fw.paradise.module.metaapi.model.MetaApiModel;
 public class QuartzSchedulerService {
 
 	private Scheduler scheduler;
-	private WebClient interfaceInfoWebClient;
+	private WebClient metaWebClient;
 	private final ModuleConfig config;
 
 	private List<MetaApiModel> lastCronScheduleInfoList;
@@ -39,9 +39,9 @@ public class QuartzSchedulerService {
 	private TaskScheduler taskScheduler;
 
 	public QuartzSchedulerService(@Autowired(required = false) Scheduler scheduler,
-			@Qualifier("interfaceInfoWebClient") WebClient interfaceInfoWebClient, ModuleConfig config) {
+			@Qualifier("metaWebClient") WebClient metaWebClient, ModuleConfig config) {
 		this.scheduler = scheduler;
-		this.interfaceInfoWebClient = interfaceInfoWebClient;
+		this.metaWebClient = metaWebClient;
 		this.config = config;
 	}
 
@@ -50,7 +50,7 @@ public class QuartzSchedulerService {
 		if (scheduler == null)
 			return;
 		try {
-			List<MetaApiModel> cronScheduleInfoList = interfaceInfoWebClient.post()
+			List<MetaApiModel> cronScheduleInfoList = metaWebClient.post()
 					.uri(ApiContextPathConstants.META_API_SCHEDULE_LIST).bodyValue(config.getInterfaceList())
 					.retrieve().bodyToMono(new ParameterizedTypeReference<List<MetaApiModel>>() {
 					}).block(); // ← 동기 호출;

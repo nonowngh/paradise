@@ -32,18 +32,18 @@ import reactor.util.retry.Retry;
 @Service
 public class APIService {
 
-	private final WebClient interfaceInfoWebClient;
+	private final WebClient metaWebClient;
 	private final WebClient gatewayWebClient;
 	ObjectMapper mapper = new ObjectMapper();
 
-	public APIService(@Qualifier("interfaceInfoWebClient") WebClient interfaceInfoWebClient,
+	public APIService(@Qualifier("metaWebClient") WebClient metaWebClient,
 			@Qualifier("gatewayWebClient") WebClient gatewayWebClient) {
-		this.interfaceInfoWebClient = interfaceInfoWebClient;
+		this.metaWebClient = metaWebClient;
 		this.gatewayWebClient = gatewayWebClient;
 	}
 
 	public Mono<MetaApiModel> getInterfaceInfo(String interfaceId) {
-		return interfaceInfoWebClient.get().uri(uriBuilder -> uriBuilder.queryParam("interfaceId", interfaceId).build())
+		return metaWebClient.get().uri(uriBuilder -> uriBuilder.queryParam("interfaceId", interfaceId).build())
 				.retrieve().bodyToMono(MetaApiModel.class).retryWhen(Retry.backoff(3, Duration.ofSeconds(1)))
 				.switchIfEmpty(
 						Mono.error(new NoSuchElementException("InterfaceInfo not found for id : " + interfaceId)));
@@ -51,7 +51,7 @@ public class APIService {
 
 	public Mono<List<MetaApiModel>> getInterfaceInfoByFunctionName(String rfcFunctionName,
 			List<String> interfaceIdList) {
-		return interfaceInfoWebClient.post()
+		return metaWebClient.post()
 				.uri(uriBuilder -> uriBuilder.path(ApiContextPathConstants.META_API_LIST_RFC_FUNCTION)
 						.queryParam("rfcFunctionName", rfcFunctionName).build())
 				.bodyValue(interfaceIdList) // Body 전송

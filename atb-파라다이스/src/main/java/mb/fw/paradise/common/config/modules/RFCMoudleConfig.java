@@ -16,10 +16,8 @@ import com.sap.conn.jco.ext.DestinationDataProvider;
 import com.sap.conn.jco.ext.ServerDataProvider;
 
 import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
 import mb.fw.paradise.common.constants.ModuleConfigConstants;
 
-@Slf4j
 @Data
 @Configuration
 @ComponentScan(basePackages = ModuleConfigConstants.RFC_PACKAGE)
